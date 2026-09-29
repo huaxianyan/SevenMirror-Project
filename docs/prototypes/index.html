@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SevenMirror · 三端低保真原型</title>
+  <link rel="stylesheet" href="wireframe.css">
+</head>
+<body data-platform="android">
+  <header class="review-header">
+    <h1>SevenMirror · 布局评审</h1>
+    <p>低保真交互示意，不是产品应用。所有应用、通知、设备、图标和状态均为虚构示例。操作只改变本页，刷新即重置，不访问网络、不申请系统权限、不保存配置。</p>
+  </header>
+  <div class="review-layout">
+    <aside aria-label="原型评审工具">
+      <label for="platform">查看哪一端</label>
+      <select id="platform"><option value="android">Android</option><option value="extension">浏览器扩展</option><option value="admin">服务端管理端</option></select>
+      <div id="scenario-panel">
+        <label for="scenario">Android 示例场景</label>
+        <select id="scenario"><option value="ready">已连接</option><option value="permission">通知访问已撤销</option><option value="offline">网络中断</option><option value="paused">用户暂停</option></select>
+      </div>
+      <h2>页面目录</h2>
+      <nav id="page-directory" aria-label="原型页面目录"></nav>
+      <p class="hint">目录与场景选择属于评审工具，不进入正式产品。</p>
+      <p class="hint">建议先看：应用 → 单个应用设置，再看设置 → 权限与运行条件。用场景选择演示权限失效。</p>
+      <a href="../PRODUCT_REDESIGN.md">返回设计草案</a>
+    </aside>
+    <main>
+      <p id="demo-feedback" class="demo-feedback" role="status">演示就绪。手机框仅用于说明页面层级，不代表最终 Material 3 视觉。</p>
+      <div class="device">
+        <div class="screen">
+          <section class="page" id="a-sync" data-platform="android" data-title="同步">
+            <header class="page-header"><h2 tabindex="-1">同步</h2><button data-go="a-settings">设置</button></header>
+            <div class="hero"><p class="eyebrow">我的手机</p><h3 id="sync-title">已连接服务</h3><p id="sync-body">等待所选应用产生通知</p><button id="sync-action" class="primary">暂停同步</button></div>
+            <button class="row" data-go="a-apps"><span><strong>同步范围</strong><small id="selection-summary">已选择 2 个应用</small></span><span aria-hidden="true">›</span></button>
+            <button class="row" data-go="a-recipients"><span><strong>接收设备</strong><small id="recipient-summary">已选择 1 个接收设备</small></span><span aria-hidden="true">›</span></button>
+            <p class="hint">设备授权状态不代表此刻在线。通知送达情况请在接收设备查看。</p>
+            <button class="row" data-go="a-permissions"><span><strong>权限与运行条件</strong><small id="permission-summary">通知访问与状态通知已允许</small></span><span aria-hidden="true">›</span></button>
+          </section>
+          <section class="page" id="a-apps" data-platform="android" data-title="应用" hidden>
+            <header class="page-header"><h2 tabindex="-1">应用</h2><span id="selected-count"></span></header>
+            <label for="app-search">搜索应用名称或包名</label><input id="app-search" type="search" placeholder="输入名称或包名">
+            <div class="filters"><label>范围<select id="app-scope"><option value="all">全部应用</option><option value="selected">已选择</option></select></label><label>类型<select id="app-type"><option value="regular">普通应用</option><option value="system">系统应用</option><option value="all">所有类型</option></select></label></div>
+            <div class="actions"><button id="select-visible">选择当前结果</button><button id="clear-visible">取消选择当前结果</button></div>
+            <div id="app-list"></div><p id="app-empty" hidden>没有匹配的应用，试试名称或包名的其他部分。</p>
+            <p class="hint">列表勾选只改变同步对象。正文、通知类型和操作权限都在设置中调整。</p>
+            <div class="save-bar"><span id="app-save-state">选择已保存</span><button id="save-apps" class="primary" disabled>保存选择</button></div>
+          </section>
+          <section class="page" id="a-settings" data-platform="android" data-title="设置" hidden>
+            <header class="page-header"><h2 tabindex="-1">设置</h2></header>
+            <h3>同步</h3>
+            <button class="row" data-go="a-recipients"><span><strong>接收设备</strong><small>选择这台手机向哪些浏览器同步</small></span><span>›</span></button>
+            <button class="row" data-go="a-defaults"><span><strong>同步与默认设置</strong><small>后台运行、静默通知、远程操作</small></span><span>›</span></button>
+            <button class="row" data-go="a-app-policy"><span><strong>单个应用设置</strong><small>正文、持续通知、操作权限覆盖</small></span><span>›</span></button>
+            <h3>运行与连接</h3>
+            <button class="row" data-go="a-permissions"><span><strong>权限与运行条件</strong><small>查看状态、重新授权和后台运行建议</small></span><span>›</span></button>
+            <button class="row" data-go="a-devices"><span><strong>服务与设备</strong><small>当前服务、名称及已授权设备</small></span><span>›</span></button>
+            <h3>其他</h3>
+            <button class="row" data-demo="数据与隐私页的布局尚未展开。后续包含本地数据说明及需要确认的重新加入流程。">数据与隐私、重新加入 <span>›</span></button>
+            <button class="row" data-demo="外观与语言页尚未展开。正式 Android 页面将使用 Material 3，支持动态颜色和深色模式。">外观与语言 <span>›</span></button>
+            <button class="row" data-demo="关于页尚未展开，将展示版本、许可证与文档。">关于 <span>›</span></button>
+          </section>
+          <section class="page" id="a-recipients" data-platform="android" data-title="接收设备" hidden>
+            <button data-go="a-settings">‹ 设置</button><h2 tabindex="-1">接收设备</h2>
+            <p>选择「我的手机」向哪些浏览器同步。此设置适用于本手机选择的所有应用。</p>
+            <label class="row"><span><strong>工作浏览器</strong><small>浏览器 · 已获管理员批准</small></span><input type="checkbox" class="recipient-choice" value="work" checked></label>
+            <label class="row"><span><strong>家用浏览器</strong><small>浏览器 · 已获管理员批准</small></span><input type="checkbox" class="recipient-choice" value="home"></label>
+            <p class="hint">新加入的设备需要在这里选择。已获批准不等于已加入本手机的同步范围。</p>
+            <div class="block"><h3>取消选择后</h3><p>停止向该设备发送后续通知。已经发出或排队中的内容可能仍会送达，并保留在对方设备。</p><p class="hint">设备仍保留工作区访问资格。若设备丢失或不再可信，请由管理员移除访问。</p></div>
+            <p id="recipient-empty" hidden>未选择接收设备。保存后，本手机暂不向任何浏览器发送新的通知。</p>
+            <div class="save-bar"><span id="recipient-save-state">选择已保存</span><button id="save-recipients" class="primary" disabled>保存选择</button></div>
+          </section>
+          <section class="page" id="a-defaults" data-platform="android" data-title="同步与默认设置" hidden>
+            <button data-go="a-settings">‹ 设置</button><h2 tabindex="-1">同步与默认设置</h2>
+            <form class="demo-settings">
+              <h3>后台运行</h3>
+              <label class="row"><span><strong>启用后台同步</strong><small>退出应用后仍继续同步，需要相应权限</small></span><input type="checkbox" role="switch" checked></label>
+              <button type="button" data-go="a-permissions">查看权限与运行条件</button>
+              <h3>通知范围</h3><label class="row"><span>同步静默通知</span><input type="checkbox" role="switch" checked></label>
+              <h3>远程操作默认权限</h3><p class="hint">新设置默认关闭，单个应用可以单独覆盖。</p>
+              <label class="row"><span>允许通知按钮操作</span><input type="checkbox" role="switch"></label>
+              <label class="row"><span>允许回复</span><input type="checkbox" role="switch"></label>
+              <label class="row"><span>允许从浏览器清除手机通知</span><input type="checkbox" role="switch"></label>
+              <div class="save-bar"><button type="reset">放弃更改</button><button class="primary">保存设置</button></div>
+            </form>
+          </section>
+          <section class="page" id="a-app-policy" data-platform="android" data-title="单个应用设置" hidden>
+            <button data-go="a-settings">‹ 设置</button><h2 tabindex="-1">单个应用设置</h2>
+            <label for="policy-app">应用</label><select id="policy-app"></select>
+            <div class="app-heading" id="policy-heading"></div>
+            <form class="demo-settings" id="policy-form">
+              <h3>内容与通知类型</h3>
+              <label class="row"><span><strong>同步通知正文</strong><small>关闭后只发送隐私处理后的内容</small></span><input type="checkbox" role="switch" checked></label>
+              <label class="row"><span>同步持续通知</span><input type="checkbox" role="switch"></label>
+              <h3>远程操作</h3>
+              <label for="policy-mode">权限方式</label><select id="policy-mode"><option value="inherit">继承默认</option><option value="view">只允许查看</option><option value="all">允许所有操作</option><option value="custom">自定义</option></select>
+              <p id="effective-policy" class="hint">当前默认：按钮操作、回复、清除均关闭。</p>
+              <fieldset id="custom-policy" hidden><legend>自定义权限</legend><label class="row">通知按钮操作<input type="checkbox" role="switch"></label><label class="row">回复<input type="checkbox" role="switch"></label><label class="row">从手机清除<input type="checkbox" role="switch"></label></fieldset>
+              <div class="save-bar"><button type="reset">放弃更改</button><button class="primary">保存设置</button></div>
+            </form>
+          </section>
+          <section class="page" id="a-permissions" data-platform="android" data-title="权限与运行条件" hidden>
+            <button data-go="a-settings">‹ 设置</button><h2 tabindex="-1">权限与运行条件</h2>
+            <p>查看同步所需的权限，以及系统的后台运行限制。</p>
+            <h3>同步所需</h3>
+            <div class="block"><div class="page-header"><h4>通知访问</h4><span id="access-status" class="badge">已允许</span></div><p>用于读取你选择的应用通知。关闭后无法同步新的通知。</p><button id="grant-access">查看系统设置</button></div>
+            <div class="block"><div class="page-header"><h4>状态通知</h4><span class="badge">已允许</span></div><p>用于显示后台同步状态。</p><button data-demo="正式实现会按 Android 版本和当前授权状态发起申请，或打开系统通知设置。本原型没有申请权限。">查看系统设置</button></div>
+            <h3>后台运行建议</h3>
+            <div class="block"><h4>电池使用</h4><p>由系统管理</p><p class="hint">如果熄屏后同步经常中断，可检查后台限制。无需为了完成设置一律关闭电池优化。</p><button data-demo="正式实现将打开设备支持的电池设置入口。本原型没有更改电池策略。">查看电池设置</button></div>
+            <p class="hint">返回本页时重新检查状态。无法确认的厂商设置只提供说明，不标记为已开启。</p>
+          </section>
+          <section class="page" id="a-devices" data-platform="android" data-title="服务与设备" hidden>
+            <button data-go="a-settings">‹ 设置</button><h2 tabindex="-1">服务与设备</h2><div class="block"><h3>当前服务</h3><p>https://mirror.example</p><p>当前设备：我的手机</p></div><h3>已授权设备</h3><div class="row">我的手机 <span>当前设备</span></div><div class="row">工作浏览器 <span>浏览器</span></div><div class="row">家用浏览器 <span>浏览器</span></div><p class="hint">设备名称与访问权限由管理员管理。授权不代表当前在线。</p>
+          </section>
+          <section class="page" id="e-list" data-platform="extension" data-title="通知列表" hidden>
+            <header class="page-header"><h2 tabindex="-1">SevenMirror</h2><button data-go="e-settings">设置</button></header>
+            <div class="page-header"><label>来源<select id="notification-source"><option value="all">全部来源</option><option value="personal">我的手机</option><option value="work">工作手机</option></select></label><span id="notification-count">当前 2 条</span></div>
+            <button class="notification" data-go="e-detail" data-source="personal"><small>我的手机 · 纸笺</small><strong>周末计划</strong><p>我们周六上午出发，可以吗？</p><small>刚刚 · 新通知</small></button>
+            <div class="notification" data-source="work"><small>工作手机 · 晴天</small><strong>天气提醒</strong><p>下午可能有阵雨。</p><small>5 分钟前 · 仅查看</small></div>
+            <p class="hint">这里是当前通知，不是历史归档。</p>
+          </section>
+          <section class="page" id="e-detail" data-platform="extension" data-title="通知详情与回复" hidden>
+            <button data-go="e-list">‹ 当前通知</button><h2 tabindex="-1">周末计划</h2><p class="eyebrow">我的手机 · 纸笺</p><div class="block"><p>我们周六上午出发，可以吗？</p></div>
+            <label for="reply">回复</label><textarea id="reply" rows="4" placeholder="输入回复"></textarea><button class="primary" data-demo="回复演示：正式页面将等待手机执行结果。本原型没有发送任何文字，也没有模拟成功回执。">发送回复</button>
+            <p id="reply-state" class="hint">回复会发送到「我的手机」上的这条通知。</p>
+            <h3>其他操作</h3><button data-demo="演示通知按钮操作入口，未在手机执行操作。">标为已读</button><button data-demo="正式实现将请求来源手机清除通知并等待结果。本原型未清除通知。">从手机清除</button>
+            <p class="hint">长回复可在独立详情页继续。关闭详情与清除手机通知是两个操作。</p>
+          </section>
+          <section class="page" id="e-settings" data-platform="extension" data-title="扩展设置" hidden>
+            <button data-go="e-list">‹ 通知</button><h2 tabindex="-1">设置</h2><div class="settings-layout"><nav aria-label="扩展设置"><button data-setting="connection" aria-current="page">连接与设备</button><button data-setting="display">通知显示</button></nav><div>
+              <div id="e-connection"><h3>连接与设备</h3><p>已连接服务</p><p>https://mirror.example</p><p>本设备：工作浏览器</p><p class="hint">成员审批和名称修改在服务端管理端完成。</p><button data-demo="加入和重新加入流程将在后续布局中展开，此处不执行注册。">查看加入说明</button></div>
+              <div id="e-display" hidden><h3>通知显示</h3><form class="demo-settings"><label class="row">显示浏览器通知<input type="checkbox" role="switch" checked></label><label class="row">显示正文<input type="checkbox" role="switch" checked></label><label class="row">显示图标与头像<input type="checkbox" role="switch" checked></label><label class="row">静默显示<input type="checkbox" role="switch"></label><label class="row">显示新通知角标<input type="checkbox" role="switch" checked></label><p class="hint">这些设置只影响此浏览器。手机决定哪些内容可以离开设备。</p><button data-demo="快捷操作规则页面沿用既有能力，具体布局尚未展开。" type="button">快捷操作设置</button><div class="save-bar"><button class="primary">保存设置</button></div></form></div>
+            </div></div>
+          </section>
+          <section class="page" id="s-devices" data-platform="admin" data-title="设备与申请" hidden>
+            <header class="page-header"><h2 tabindex="-1">设备</h2><button class="primary" data-go="s-add">添加设备</button></header>
+            <p class="eyebrow">我的私有空间</p><h3>待处理申请</h3><div class="block"><div class="page-header"><h4>新浏览器</h4><span class="badge" id="approval-state">等待批准</span></div><p>浏览器 · 刚刚申请加入</p><div class="actions"><button id="approve-device">批准</button><button data-demo="拒绝申请的正式界面会确认对象及后果。本原型没有拒绝设备。">拒绝</button></div></div>
+            <h3>已接入设备</h3><button class="row" data-go="s-detail"><span><strong>我的手机</strong><small>Android · 最近活动于 2 分钟前</small></span><span>详情 ›</span></button><div class="row"><span><strong>工作浏览器</strong><small>浏览器 · 最近活动于 5 分钟前</small></span></div>
+            <details><summary>已撤销／已拒绝</summary><p>暂无记录</p></details><p class="hint">最近活动不是实时在线状态。管理端只处理设备访问，不查看通知内容。</p>
+          </section>
+          <section class="page" id="s-add" data-platform="admin" data-title="添加设备" hidden>
+            <button data-go="s-devices">‹ 设备</button><h2 tabindex="-1">添加设备</h2><label>设备类型<select><option>Android</option><option>浏览器</option></select></label><p>加入码用于提交一次申请，设备名称由客户端加入时填写。收到申请后，还需要在管理端批准。</p><button class="primary" id="generate-code">生成加入码</button><div id="sample-code" class="block" hidden><strong>示例加入码 · 不可使用</strong><p>正式加入码仅展示一次，有效期内可提交一次申请。</p><button data-go="s-devices">查看待处理申请</button></div>
+          </section>
+          <section class="page" id="s-detail" data-platform="admin" data-title="设备详情" hidden>
+            <button data-go="s-devices">‹ 设备</button><h2 tabindex="-1">我的手机</h2><dl><dt>类型</dt><dd>Android</dd><dt>访问状态</dt><dd>已批准</dd><dt>最近活动</dt><dd>2 分钟前</dd></dl><button data-demo="重命名将由现有管理业务完成，并同步到各端。本原型没有改变设备名称。">重命名</button><div class="block"><h3>移除设备访问</h3><p>移除后，「我的手机」将停止同步，恢复使用需要重新加入。</p><button data-demo="正式实现将明确确认「我的手机」的撤销操作。本原型没有移除访问。">移除设备</button></div>
+          </section>
+        </div>
+        <nav id="android-nav" class="bottom-nav" aria-label="Android 主导航"><button data-go="a-sync">同步</button><button data-go="a-apps">应用</button><button data-go="a-settings">设置</button></nav>
+      </div>
+    </main>
+  </div>
+  <script src="wireframe.js"></script>
+</body>
+</html>

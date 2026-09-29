@@ -1,0 +1,15 @@
+.git/
+node_modules/
+build/
+dist/
+.gradle/
+.kotlin/
+.idea/
+*.db
+*.db-shm
+*.db-wal
+*.log
+*.apk
+*.aab
+.DS_Store
+Thumbs.db
