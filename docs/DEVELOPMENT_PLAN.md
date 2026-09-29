@@ -599,8 +599,20 @@
 - **边界**：三端仍未打 tag，`release-artifacts.yml` 的 tag 路径从未执行过；T4–T6 的卡点（`release-candidate` environment 需在 GitHub 侧批准、本机无 docker、gh 凭据缺 `write:packages`）本轮未动。
 - 证据：`.tools/release-prep/`（`FINDINGS.md`、`probe-git-bytes.py`、`seal-protocol-version.py`、`sync-protocol.py`）。
 
-## 7. 工作方式调整（2026-09-15，用户确认）
+## 6.41 执行进展（2026-09-29）：留痕独立成项目总仓库 —— 三组件只放代码
 
+按用户要求建立公开总仓库 `SevenMirror-Project`（<https://github.com/huaxianyan/SevenMirror-Project>），三个组件仓库今后只放代码；系统说明、产品文档与开发留痕集中到总仓库。见 `docs/STATUS.md` 条目 148。
+
+**内容切分**：总仓库收录根 `README.md`（重写为系统总览）、`docs/` 下的 PRD、信息架构、产品重设计、实施计划、方向修正、本计划、`STATUS.md`、分支审计、原型目录与两份许可证。源码与构建配置仍归各自仓库；本机 `.tools/`（约 11 GB）属草稿，不入库。
+
+**入库前脱敏是主要工作量。** 总仓库公开，不得出现内网地址、主机名、服务器绝对路径、设备序列号、远程调试端口与凭据。实测：设计类文档命中为 0，只有 `STATUS.md`、`DEVELOPMENT_PLAN.md`、`PRODUCT_REDESIGN.md` 需要处理，共替换 262 处。工具是本机 `.tools/conventions-audit/sanitize_copy.py`，源文件只读、目标另写。
+
+**一次真实回归**：首版正则把公开包名 `com.neko7ina.sevenmirror` 也换成了占位符（自有域名的二级标签恰好出现在这个包名里），另一处贪夢吃了后续正文。修法是域名只匹配完整主机名，路径占位符在反引号、空白与标点处停下。**改完必须抽查包名计数与断句完整性。**
+
+- **边界**：总仓库不含组件源码，不能单独构建；它不能替代 `docs/STATUS.md` 作为权威本，后续每轮需重新同步；本机 `E:\dev\notification-mirroring` 仍不是 Git 仓库，总仓库工作树在 `E:\dev\sevenmirror-project`。三端 main 未变。
+- 证据：`.tools/conventions-audit/`（`scan-sensitive-small.py`、`sanitize_copy.py`）。
+
+## 7. 工作方式调整（2026-09-15，用户确认）
 目标改为尽快达成三端真实可用，开发与测试方式相应调整。
 
 1. **TalkBack 移出近期计划。** R4 原定的键盘／TalkBack 验收中，TalkBack 部分优先级不足，已从 A2 的验收范围移除，不再作为阶段三门禁。它仍保留在 `PRD.md`、`PRODUCT_INFORMATION_ARCHITECTURE.md` 与 `IMPLEMENTATION_PLAN.md` 的产品要求里，作为后续独立质量项，不在当前轮次投入人力。A2 剩余项（深色模式、字体缩放、键盘、横屏、窄屏、中英文、升级数据兼容）不变。

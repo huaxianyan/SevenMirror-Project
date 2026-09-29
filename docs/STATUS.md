@@ -472,6 +472,19 @@
 - **仍挂账、未验证**：`review-checklist.md` 的 SR-015／`G-01` 状态位仍是 `OPEN`／未勾选，与「已接入但无已评审发布批准」的长期口径一致，**不是**待修文案；三端仍未打 tag；relay 与 `.env` 的镜像漂移仍待用户拍板。
 - 证据：`.tools/conventions-audit/`（`count-quotes.py`、`list-curly.py`、`normalize-quotes.py`、`summarize-findings.py`、`inspect-gate.py`、`show-ellipsis.py`）。
 
+## STATUS-148：留痕独立成项目总仓库 —— 三组件只放代码
+
+状态：**总仓库已上线公开**（2026-09-29）；未改任何组件代码、未部署、未触发三仓库 CI
+
+- **决定**：按用户要求建立总的公开仓库 `SevenMirror-Project`（<https://github.com/huaxianyan/SevenMirror-Project>），**三个组件仓库今后只放开发代码**；系统说明、产品文档与全部开发文字留痕集中在总仓库。依据是用户级技能 `project-conventions` 的“进度文档入库、跟代码一起提交、任何工具都能读”一条。
+- **内容切分**：总仓库收录根目录 `README.md`（重写为系统总览）、`docs/PRD.md`、`PRODUCT_INFORMATION_ARCHITECTURE.md`、`PRODUCT_REDESIGN.md`、`IMPLEMENTATION_PLAN.md`、`DEVELOPMENT_DIRECTION_CORRECTION.md`、`DEVELOPMENT_PLAN.md`、`STATUS.md`、`BRANCH_AUDIT.md`、`docs/prototypes/`（含 3 个可直接打开的原型文件）、`LICENSE` 与 `LICENSE-TRANSITION.md`。**不进总仓库**：任何组件源码与构建配置（仍归各自仓库）、本机 `.tools/` 证据目录（约 11 GB，属草稿）。
+- **入库前脱敏（这是本轮的技术主体）**：总仓库是公开的，按技能不得出现内网地址、主机名、服务器绝对路径、设备序列号、远程调试端口与凭据。先实测扫描：设计类文档（PRD、信息架构、实施计划、方向修正、分支审计、原型）**命中为 0**，只有 `STATUS.md`、`DEVELOPMENT_PLAN.md`、`PRODUCT_REDESIGN.md` 含此类内容。脱敏用本机脚本 `sanitize_copy.py`，**源文件只读、目标另写**，共替换 262 处：主机名 123、内网地址 22、设备临时目录 19、同步目录 22、私有域名与部署 origin 32、服务器路径 10、设备序列号 9、工作机路径与名称、内网调试端口 4、应用 UID 2。
+- **一次真实回归（值得记住）**：脱敏脚本首版的正则把 `com.neko7ina.sevenmirror` 也换成了占位符——自有域名的二级标签恰好出现在这个公开包名里，而**公开包名必须原样保留**。另一处正则贪夢吃了后续正文（“仅剩新偏好”后面的“（22”）。两处都已修：域名只匹配完整主机名，路径占位符在反引号、空白与全半角标点处停下。**改完必须抽查包名计数与断句完整性**，脱敏脚本不能当“一次就对”的工具。
+- **验证**：总仓库 17 个文件已推送，远端 `visibility=PUBLIC`、默认分支 `main`，本地 HEAD 与 `origin/main` 同为 `ddbc5af`。对全部入库文档重跑敏感项扫描：序列号、内网网段、服务器路径、设备临时目录、私有域名、工作机路径、远程调试端口**全部 0 命中**；`com.neko7ina.sevenmirror` 在 `STATUS.md` 保留 11 处、`DEVELOPMENT_PLAN.md` 保留 7 处，未被误改。`docs/CONTENT_BOUNDARY.md` 写清了放什么与不放什么。
+- **顺带补上的两条项目约定**（根 `AGENTS.md` 新增“文案、记录与交接”一节）：留痕分两处（跨组件在总仓库、组件技术文档在各自 `docs/`）；总仓库入库前必须脱敏、`.tools/` 不入库；同步留痕用 `sanitize_copy.py` 且必须抽查。
+- **边界**：总仓库不含组件源码，不能单独拿它构建；本机 `E:\dev\notification-mirroring` 仍不是 Git 仓库，它是“三个子仓库 + 总仓库工作树”的并列目录，**总仓库工作树在 `E:\dev\sevenmirror-project`**；`STATUS.md` 与 `DEVELOPMENT_PLAN.md` 在总仓库里是公开副本，后续每轮需要重新同步（本机原件仍是权威版本）。三端 main 未变（Android `06a3faf`、Extension `b8b61ea`、Server `c59eff5`）。
+- 证据：`.tools/conventions-audit/`（`scan-sensitive-small.py`、`sanitize_copy.py`、`summarize-findings.py`）。
+
 ## STATUS-130：管理端产品名与扩展设置页统一；relay 关闭帧修复随本次部署上线
 
 - **需求**：七叔反馈管理端 logo 字体太细，要求与扩展设置页统一；同时把仍是旧镜像的 docker 容器一并更新，手机端断开一会可接受。
