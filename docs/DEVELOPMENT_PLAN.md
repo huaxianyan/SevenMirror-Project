@@ -622,6 +622,16 @@
 
 - **未决**：下一步在「可靠性矩阵」与「发布流程 T3–T6」之间二选一，用户尚未定。发布流程的卡点全在环境与流程（本机无 docker、`gh` 缺 `write:packages`、`release-candidate` 需 GitHub 侧批准、ledger 升 `approved` 需两个决策者），均需外部资源。
 
+## 6.43 执行进展（2026-09-30）：补上发布路径的最后一环 —— Android 首个 GitHub Release 流程
+
+用户选定先做发布。侦察发现一个真实缺口：**三端发布工作流都只把产物上传为 Actions artifact，从未有任何 `gh release create`**（`git log -S` 确认从未有过），而 `android/README.md` 已经写着「Install the APK from GitHub Releases」⇒ README 承诺的分发路径实际不存在。本轮先做 Android。见 `docs/STATUS.md` 条目 150。
+
+按新装的用户级技能 `release-notes-standard` 落地：发布说明 ≤ 40 行、不得以 H1 开头、必须有 `## 主要更新` 节、必须链接 `/blob/v<标签>/` 下的真实文档、正文禁写「使用说明／真机验收／构建与兼容范围／兼容边界」；**Release 标题就是标签本身**。
+
+改动（Android `13b355a`，7 文件 +280/−1）：`docs/release-notes/v0.1.0.md`（28 行）、技能移植的 `scripts/verify_release_notes.py` 与其 7 项自测、工作流新增「Verify release notes」步骤与 `publish-release` job（`contents: write`、`needs: build-sign-and-attest`、`if: github.ref_type == 'tag'`、拼上生成的 `## 构建信息` 表、`gh release create --verify-tag`）、CI 挂上门禁自测、文档补“Published release”一节。
+
+- **边界**：未打 tag、未创建 Release，发布 job 从未真实执行过；扩展与服务端仍缺同一环。
+
 ## 7. 工作方式调整（2026-09-15，用户确认）
 目标改为尽快达成三端真实可用，开发与测试方式相应调整。
 

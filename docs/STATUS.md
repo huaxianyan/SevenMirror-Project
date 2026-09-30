@@ -497,6 +497,23 @@
 - **边界**：本轮**未部署、未重启任何容器**，线上 relay 仍跑 `43fe08c`、admin-web 仍跑 `de944a6`，`.env` 仍指向 `de944a6`——按本轮结论这属预期，不构成隐患（两端二进制与 `c59eff5` 等价）。三端版本号仍各自独立，「三端对齐」不是目标。未在本机验证 compose 语法（环境无 `pyyaml`，且 compose 文件未改结构，只改注释）。
 - 证据：本轮无本机证据目录；CI 记录见上述 run 号。
 
+## STATUS-150：补上发布路径的最后一环 —— Android 首个 GitHub Release 流程
+
+状态：**已合入 Android main**（2026-09-30）；Android `06a3faf → 13b355a`；**未打 tag、未创建 Release、未部署**
+
+- **发现的真实缺口**：三端 `release-artifacts.yml` 都只把产物上传为 Actions artifact（保留 30 天），**从未有任何 `gh release create`**（`git log -S` 确认从未有过）。而 `android/README.md` 已经写着「Install the APK from GitHub Releases」⇒ README 承诺的分发路径实际不存在。这正是 T3–T6 里 T3 的另一半（之前只定了 tag 口径，没定发布动作）。
+- **技能输入**：按新装的用户级技能 `release-notes-standard` 落地——发布说明必须短（≤ 40 行）、不得以 H1 开头、必须有 `## 主要更新` 节、必须链接 `/blob/v<标签>/` 下的真实文档、正文禁止「使用说明／真机验收／构建与兼容范围／兼容边界」四节；**Release 标题就是标签本身**，不加产品名前缀。
+- **改动（`13b355a`，7 文件 +280/−1）**：
+  - `docs/release-notes/v0.1.0.md`：首个发布说明，**28 行**，写清镜像、远程操作、后台连接与心跳、重启自愈、诊断环形文件、豁免引导六项，并说明升级保留配对身份与应用选择。
+  - `scripts/verify_release_notes.py`：从技能移植的格式门禁（含 `--tag` 拼路径、`--max-lines`、`--summary-heading`、`--link-pattern`、`--forbidden`）。
+  - `scripts/test_verify_release_notes.py`：7 项自测，逐条钉住 H1 开头、禁节、缺链、双身份节、超行数，并**校验仓库内真实发布说明通过门禁**。
+  - `.github/workflows/release-artifacts.yml`：顶层 `contents: read` 改为 `contents: write`（`gh release create` 必需）；新增「Verify release notes」步骤（仅 tag）；新增 `publish-release` job，`needs: build-sign-and-attest`、`if: github.ref_type == 'tag'`，用 `actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53`（v6.0.0，轻量标签已核对为 commit）取回已验证的三件套，拼上生成的 `## 构建信息` 表（版本 + 每个产物 SHA-256），`gh release create --verify-tag` 发布。
+  - `.github/workflows/ci.yml`：把门禁自测挂进 CI。`.gitignore` 补 `__pycache__/`。
+  - `docs/release-provenance.md`：新增“Published release”一节，写清发布 job 的触发条件、正文拼装、标签与标题口径。
+- **验证**：门禁对 `v0.1.0` 输出 `verified across 1 file(s)`，对不存在的 tag 报 `file does not exist` 并 exit 1（正反两例都实测）；新文档过中文排版门禁；`verifyKotlinKaptAdvisoryGuard test lint assembleDebug` **BUILD SUCCESSFUL in 2m 40s**；用 js-yaml 解析三端工作流结构，确认新 job 的 needs、if、步骤序列与权限正确。分支 CI `36741673229`（四项全绿，含 `api29-secure-runtime`）、主线 CI `36742853946` 全绿；同 SHA `--ff-only` 快进，分支已按精确 lease 删除，仓库只剩干净 `main`。
+- **边界**：**未打 tag，也未创建过 Release**——本轮的端到端验收只到「门禁通过 + 工作流结构正确 + 本地测试集通过」，发布 job 本身从未真实执行过（与 T4 的 `release-candidate` environment 需人工批准相关）。扩展与服务端**仍缺同一环**，本轮只做了 Android。`v0.1.0.md` 里的链接锚点在 HEAD 下存在，但它写的是 `v0.1.0` 标签下的路径，而该标签尚未创建。
+- 证据：`.tools/release-notes/`（`list-artifacts.py`、`check-workflows.js`、`android-local.log`）。
+
 ## STATUS-130：管理端产品名与扩展设置页统一；relay 关闭帧修复随本次部署上线
 
 - **需求**：七叔反馈管理端 logo 字体太细，要求与扩展设置页统一；同时把仍是旧镜像的 docker 容器一并更新，手机端断开一会可接受。
