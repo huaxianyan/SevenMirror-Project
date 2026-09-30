@@ -485,6 +485,18 @@
 - **边界**：总仓库不含组件源码，不能单独拿它构建；本机 `E:\dev\notification-mirroring` 仍不是 Git 仓库，它是“三个子仓库 + 总仓库工作树”的并列目录，**总仓库工作树在 `E:\dev\sevenmirror-project`**；`STATUS.md` 与 `DEVELOPMENT_PLAN.md` 在总仓库里是公开副本，后续每轮需要重新同步（本机原件仍是权威版本）。三端 main 未变（Android `06a3faf`、Extension `b8b61ea`、Server `c59eff5`）。
 - 证据：`.tools/conventions-audit/`（`scan-sensitive-small.py`、`sanitize_copy.py`、`summarize-findings.py`）。
 
+## STATUS-149：单镜像布局与运行版本口径 —— 不拆镜像
+
+状态：**已合入 Server main**（2026-09-29）；Server `c59eff5 → cc84f2a`；**未部署、未重启任何容器**
+
+- **需求与决策**：用户提出「三个服务是不是应该分开三个镜像」。核查后确认当前布局是**一个镜像含三个二进制**，靠 `entrypoint` 切换（`/app/server` 默认、`/app/admin`、`/app/admin-web`），三个服务共用 `${SEVENMIRROR_IMAGE}`。用户最终决定：**镜像不拆**，并把「功能更新导致服务端重启、手机断连若干秒」定为可接受的预期代价。
+- **不拆的理由（按重要性）**：① 特权边界来自**挂载列表**而不是镜像内容——只有 `admin`／`admin-web` 挂 `./authority`，relay 只挂 `./data`；核实 `cmd/server` 与 `internal/relay` 对 `internal/adminweb` **零引用**，拆镜像不会让 relay 更看不到密钥。② 发布成本会乘三：ledger 的 `approved` 要求两个不同决策者，已是卡点，三份产物就是三份待批。③ 用户要的「只更新某端」是 compose 变量层面的事，不需要拆镜像。
+- **一个能省下重启的事实**：`de944a6 → c59eff5` 只改了 8 个文件（`.gitattributes`、`.gitleaks.toml`、`README.md` 与 4 份 `protocol/*.md`、`PROTOCOL_VERSION`），**`go.mod`／`go.sum`／`cmd/`／`internal/` 一格未动**，且全仓无 `go:embed` ⇒ 这些文件不进二进制。也就是说 `c59eff5` 与 `de944a6` 构建出的二进制**是同一份字节**，本次升级的真实效果只有 README 与镜像 label 变新，重启 relay 收益为零。因此**维持现状、不动线上**，只把口径写进文档。
+- **改动（`cc84f2a`，2 文件 +53/−2，纯文档与注释）**：`docs/deployment.md` 新增两个小节——“One image, three services”（共用引用、entrypoint 选择二进制、边界来自挂载、只改控制台也会连带重启 relay）与“`.env` versus the running revision”（用 `docker inspect` 读 `org.opencontainers.image.revision` label 判真实运行版本；重启前先看构建输入有没有变）；第 10 节升级流程插入「先查构建输入」一步，并说明不带服务名的 `up -d` 也会替换控制台。`deploy/compose/compose.yaml` 头部注释补同一口径。
+- **验证**：`gofmt -l cmd internal protocol` 无输出；`go build ./cmd/...` 通过；`docs/deployment.md` 的 9 条相对链接全部存在；无任何测试读取 `compose.yaml` 或 `deployment.md`（已核实）。分支 CI `36675136346`、主线 CI `36675459124` 均成功，同 SHA `--ff-only` 快进，分支已按精确 lease 删除，仓库只剩干净 `main`。
+- **边界**：本轮**未部署、未重启任何容器**，线上 relay 仍跑 `43fe08c`、admin-web 仍跑 `de944a6`，`.env` 仍指向 `de944a6`——按本轮结论这属预期，不构成隐患（两端二进制与 `c59eff5` 等价）。三端版本号仍各自独立，「三端对齐」不是目标。未在本机验证 compose 语法（环境无 `pyyaml`，且 compose 文件未改结构，只改注释）。
+- 证据：本轮无本机证据目录；CI 记录见上述 run 号。
+
 ## STATUS-130：管理端产品名与扩展设置页统一；relay 关闭帧修复随本次部署上线
 
 - **需求**：七叔反馈管理端 logo 字体太细，要求与扩展设置页统一；同时把仍是旧镜像的 docker 容器一并更新，手机端断开一会可接受。

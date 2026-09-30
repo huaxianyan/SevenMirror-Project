@@ -612,6 +612,16 @@
 - **边界**：总仓库不含组件源码，不能单独构建；它不能替代 `docs/STATUS.md` 作为权威本，后续每轮需重新同步；本机 `E:\dev\notification-mirroring` 仍不是 Git 仓库，总仓库工作树在 `E:\dev\sevenmirror-project`。三端 main 未变。
 - 证据：`.tools/conventions-audit/`（`scan-sensitive-small.py`、`sanitize_copy.py`）。
 
+## 6.42 执行进展（2026-09-29）：单镜像布局与运行版本口径 —— 不拆镜像
+
+用户提出「三个服务是不是应该分开三个镜像」。核查后确认当前是一个镜像含 `server`／`admin`／`admin-web` 三个二进制、靠 `entrypoint` 切换，三者共用 `${SEVENMIRROR_IMAGE}`。**决定：不拆镜像**，并把「功能更新导致服务端重启、手机断连若干秒」定为可接受的预期代价。见 `docs/STATUS.md` 条目 149。
+
+**不拆的理由**：特权边界来自挂载列表而不是镜像内容（只有 `admin`／`admin-web` 挂 `authority`，relay 只挂 `data`，`cmd/server` 对 `internal/adminweb` 零引用）；拆镜像会把发布成本乘三（ledger 的 `approved` 已要求两个不同决策者）；用户要的「只更新某端」是变量层面的事。
+
+**一个能省下重启的事实**：`de944a6 → c59eff5` 只改文档与协议文本，`go.mod`／`go.sum`／`cmd/`／`internal/` 未动、全仓无 `go:embed` ⇒ 二进制与 `c59eff5` 等价，重启 relay 收益为零。因此**维持现状、不动线上**，只把口径写进 `server/docs/deployment.md` 与 compose 头注释（Server `cc84f2a`，2 文件 +53/−2，纯文档与注释；分支 CI `36675136346`、主线 `36675459124`）。
+
+- **未决**：下一步在「可靠性矩阵」与「发布流程 T3–T6」之间二选一，用户尚未定。发布流程的卡点全在环境与流程（本机无 docker、`gh` 缺 `write:packages`、`release-candidate` 需 GitHub 侧批准、ledger 升 `approved` 需两个决策者），均需外部资源。
+
 ## 7. 工作方式调整（2026-09-15，用户确认）
 目标改为尽快达成三端真实可用，开发与测试方式相应调整。
 
