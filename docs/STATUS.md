@@ -514,6 +514,25 @@
 - **边界**：**未打 tag，也未创建过 Release**——本轮的端到端验收只到「门禁通过 + 工作流结构正确 + 本地测试集通过」，发布 job 本身从未真实执行过（与 T4 的 `release-candidate` environment 需人工批准相关）。扩展与服务端**仍缺同一环**，本轮只做了 Android。`v0.1.0.md` 里的链接锚点在 HEAD 下存在，但它写的是 `v0.1.0` 标签下的路径，而该标签尚未创建。
 - 证据：`.tools/release-notes/`（`list-artifacts.py`、`check-workflows.js`、`android-local.log`）。
 
+## STATUS-151：三端发布路径补齐 —— 扩展与服务端同源落地
+
+状态：**三端均已合入各自 main**（2026-09-30）；Extension `b8b61ea → 1e08a1c`、Server `cc84f2a → 1214857`；**未打 tag、未创建 Release**
+
+- **背景**：延续条目 150。Android 样板成立后，把同一套搬到另两端。两端的产物、版本来源与渠道各不相同，因此不是机械复制：
+
+| 端 | 产物集（Release 资产） | 版本来源 | 主分发渠道 |
+| --- | --- | --- | --- |
+| Android | APK + `release-manifest.json` + `SHA256SUMS` | `release-identity.properties` 的 `versionName` | GitHub Releases |
+| Extension | `sevenmirror-extension-0.1.21.zip` + manifest + `SHA256SUMS` | `manifest.json`（且必须等于 `package.json`） | Chrome Web Store |
+| Server | 6 个 Linux 二进制 + manifest + `SHA256SUMS` | `protocol/PROTOCOL_VERSION` | 容器镜像仓库 |
+- **Extension（`1e08a1c`，7 文件 +285/−1）**：发布说明 `v0.1.21.md`（28 行，六项更新）；新增 `verify_release_notes.py` 与 7 项自测；工作流加「Verify release notes」步骤与 `publish-release` job；文档补“Published release”一节，并**明确写清发布 ZIP 不等于关闭 Chrome Web Store 边界**（商店上架、商店服务的 CRX 身份与发布者账号证据仍各自成立且未完成）。
+- **Server（`1214857`，6 文件 +292/−1）**：发布说明 `v0.1.0.md`（30 行）；同样的门禁与自测；工作流同样新增发布 job。
+- **服务端遇到的一个真实冲突**：它的两套产物集（二进制集与容器集）**各有一份 `SHA256SUMS` 与 `index.json`**，而 GitHub Release 不允许两个同名资产；若用 `download-artifact` 的 `merge-multiple: true` 还会在下载阶段直接互相覆盖。按已定的渠道划分（服务端走容器镜像仓库），**Release 只放二进制集**，容器集继续作为工作流 artifact 并走 registry。这一点写进了 `docs/server-release-provenance.md`。
+- **过程中我犯的两个错，均已修正**：① 改 Extension `ci.yml` 时把 `run: |` 与下一行挤成一行，破坏了 YAML——已用补丁脚本精确修复并重验结构；② 对 `server-release-provenance.md` 发了一次无意义的空编辑（本就不该发），随后改按文档结构准确落笔。
+- **验证**：三端门禁正反两例均实测（通过；不存在的 tag 报 `file does not exist` 并 exit 1）；新文档均过中文排版门禁（`typography contract verified`）；Extension `npm test` **49 文件 191 项**与 `npm run build` 通过；Android 统一测试集 `BUILD SUCCESSFUL in 2m 40s`；Server `gofmt` 干净、`go build ./cmd/...` 通过、文档相对链接全部存在；三端工作流均用 js-yaml 解析结构校验。六个 CI 全绿：Extension `36777250312`／`36777387221`，Server `36804312817`／`36804627501`，Android `36741673229`／`36742853946`。三次同 SHA `--ff-only` 快进，分支均按精确 lease 删除，三仓库只剩干净 `main`。
+- **边界**：**三端都未打 tag、都未创建过 Release**，`publish-release` job 从未真实执行过（受 `release-candidate` environment 的人工批准约束）。服务端的容器集不会成为 Release 资产，因此“服务端经容器镜像仓库发布”仍只有 GHCR 那 2 个 `candidate`、`0` 个 `approved`（升 `approved` 需两个不同决策者）。
+- 证据：`.tools/release-notes/`（`list-server-artifacts.py`、`inspect-server-names.py`、`patch-ci.py`、`extension-test.log`、`extension-build.log`、`check-workflows.js`）。
+
 ## STATUS-130：管理端产品名与扩展设置页统一；relay 关闭帧修复随本次部署上线
 
 - **需求**：七叔反馈管理端 logo 字体太细，要求与扩展设置页统一；同时把仍是旧镜像的 docker 容器一并更新，手机端断开一会可接受。

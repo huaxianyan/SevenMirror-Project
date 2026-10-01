@@ -632,6 +632,16 @@
 
 - **边界**：未打 tag、未创建 Release，发布 job 从未真实执行过；扩展与服务端仍缺同一环。
 
+## 6.44 执行进展（2026-09-30）：三端发布路径补齐 —— 扩展与服务端同源落地
+
+Android 样板成立后把同一套搬到另两端。三端的产物、版本来源与渠道各不相同，因此不是机械复制：Android 走 GitHub Releases（APK + manifest + `SHA256SUMS`，版本取自 `versionName`）；Extension 主渠道是 **Chrome Web Store**（发布 ZIP 为商店提交包，版本取自 `manifest.json` 且须等于 `package.json`）；Server 走 **容器镜像仓库**（版本取自 `PROTOCOL_VERSION`）。Extension `1e08a1c`、Server `1214857`，见 `docs/STATUS.md` 条目 151。
+
+**服务端遇到一个真实冲突**：两套产物集各有一份 `SHA256SUMS`，而 GitHub Release 不允许两个同名资产；若用 `merge-multiple: true` 还会在下载阶段互相覆盖。按已定渠道划分，**Release 只放二进制集**，容器集继续作为工作流 artifact 并走 registry。
+
+扩展的发布说明里额外写明：**发布 ZIP 不等于关闭 Chrome Web Store 边界**，商店上架、商店服务的 CRX 身份与发布者账号证据仍各自成立且未完成。
+
+- **边界**：三端都未打 tag、都未创建过 Release，`publish-release` job 从未真实执行过（受 `release-candidate` 人工批准约束）。服务端容器集不会成为 Release 资产，因此“经容器镜像仓库发布”仍只有 2 个 `candidate`、`0` 个 `approved`。
+
 ## 7. 工作方式调整（2026-09-15，用户确认）
 目标改为尽快达成三端真实可用，开发与测试方式相应调整。
 
