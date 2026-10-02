@@ -642,6 +642,18 @@ Android 样板成立后把同一套搬到另两端。三端的产物、版本来
 
 - **边界**：三端都未打 tag、都未创建过 Release，`publish-release` job 从未真实执行过（受 `release-candidate` 人工批准约束）。服务端容器集不会成为 Release 资产，因此“经容器镜像仓库发布”仍只有 2 个 `candidate`、`0` 个 `approved`。
 
+## 6.45 执行进展（2026-10-01）：compose 改为一键启动
+
+用户要求提供一份「拉下来就能快捷启动服务端」的 compose，范围限定为**只启动服务端与管理后台、持久化文件放在 compose 所在目录、反代由用户自己解决**，仓库提供反代示例。见 `docs/STATUS.md` 条目 152。
+
+**根因**：原来要求用户首次启动后 `docker network inspect` 查网桥网关再回来填 `SEVENMIRROR_TRUSTED_PROXY` —— 那是 **relay 用容器发布端口**导致的（代理经回环转发进来，relay 看到的对端是网桥网关）。而项目自己的反代文档写着不得把明文中继暴露在容器发布端口，CI 的 Caddy 金丝雀用的也是 `NM_ADDRESS=<LAN_ADDR>:<port>` + `<LAN_ADDR>`。⇒ **relay 改用 host 网络**，回到文档与测试覆盖的拓扑，预置 `<LAN_ADDR>` 即可、无需查询，也不钉任何子网。
+
+**改动（Server `e3fbf00`，4 文件 +182/−54）**：compose relay 改 host 网络、去掉 ports 与自建 networks；`.env.example` 预置回环可信代理；新增 `deploy/nginx/mirror.conf` 与已有 Caddy 基线并列；`docs/deployment.md` 同步（服务表网络列、去掉查网关步骤、改用 `ss -ltn` 验证监听、列出反代必须满足的两条规则）。
+
+**真机启动验证**（本机无 docker，用测试主机的临时目录 + 线上同一镜像 `43fe08c`，端口避开线上）：`compose config` 解析通过、relay `healthz`／`readyz` 200、监听**只有回环**、`init-workspace` 成功、按需管理端 `/login` 200 且挂载含 `authority`。收尾：测试栈已删、端口已释放、临时目录已清，并清掉一个上轮遗留容器；线上两容器与实验前逐字相同。
+
+- **边界**：用的是线上旧镜像而非 main 新构建，只证明编排正确；未验证真实 nginx 接入与 IPv6。
+
 ## 7. 工作方式调整（2026-09-15，用户确认）
 目标改为尽快达成三端真实可用，开发与测试方式相应调整。
 

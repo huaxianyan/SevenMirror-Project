@@ -533,6 +533,28 @@
 - **边界**：**三端都未打 tag、都未创建过 Release**，`publish-release` job 从未真实执行过（受 `release-candidate` environment 的人工批准约束）。服务端的容器集不会成为 Release 资产，因此“服务端经容器镜像仓库发布”仍只有 GHCR 那 2 个 `candidate`、`0` 个 `approved`（升 `approved` 需两个不同决策者）。
 - 证据：`.tools/release-notes/`（`list-server-artifacts.py`、`inspect-server-names.py`、`patch-ci.py`、`extension-test.log`、`extension-build.log`、`check-workflows.js`）。
 
+## STATUS-152：compose 改为一键启动 —— 消掉手工查网桥网关
+
+状态：**已合入 Server main 并完成真机启动验证**（2026-10-01）；Server `2b89511 → e3fbf00`；线上未动
+
+- **需求**：用户要求“给用户提供一个 docker compose 文件，使用这个直接就可以快捷启动服务端”，并明确 **compose 只负责启动服务端与管理后台、持久化文件放在 compose 所在目录、反代由用户自己解决**（Caddy 或 nginx），仓库提供一份反代示例配置。
+- **原来的三个摩擦点**：① `SEVENMIRROR_TRUSTED_PROXY` 要求在首次启动后跑 `docker network inspect` 查出网桥网关再回来填，填错会静默失效；② 仓库只有一份需 5 个环境变量、要自备证书的 Caddyfile，属主机安装路径；③ 管理端因进程强制要求回环监听，只能用 `network_mode: host`。
+- **根因与修法**：那个「需要事后查」的值是**容器发布端口**导致的——relay 在桥接网络里，代理经宿主回环转发进来，relay 看到的 socket 对端就成了网桥网关（线上就是 `<LAN_ADDR>`）。而项目自己的反代文档写着「保持 `NM_ADDRESS=<LAN_ADDR>`，**不得把明文中继暴露在 LAN、容器发布端口或公开接口**」，CI 的 Caddy 金丝雀用的也正是 `NM_ADDRESS=<LAN_ADDR>:<port>` + `NM_TRUSTED_PROXY_CIDRS=<LAN_ADDR>`。⇒ **让 relay 也用 host 网络**，回到文档与测试覆盖的那套拓扑：`NM_TRUSTED_PROXY` 预置为 `<LAN_ADDR>` 即可，无需任何查询；**且不再钉任何 Compose 子网，不会与用户已有网络冲突**。
+- **改动（`e3fbf00`，4 文件 +182/−54）**：`deploy/compose/compose.yaml`（relay 改 `network_mode: host`、去掉 ports 与自建 networks、三项安全配置保留）、`deploy/compose/.env.example`（预置回环可信代理，写清只需决定 `SEVENMIRROR_IMAGE`）、**新增 `deploy/nginx/mirror.conf`**（与已有 Caddy 基线并列的反代示例，含 WebSocket upgrade 与「替换而不是追加 `X-Forwarded-For`」两条关键点）、`docs/deployment.md`（服务表的网络列、第 3 节去掉查网关步骤、第 5 节改用 `ss -ltn` 验证监听、第 6 节改为指向两份示例并列出反代必须满足的两条规则）。
+- **真机启动验证（本轮关键证据，在本机无 docker 的前提下用测试主机完成）**：把 compose 与 .env 上传到测试主机的临时目录，用**与线上相同的镜像** `sevenmirror-server:43fe08c` 真实启动，端口避开线上（relay 18099、管理端 18098）：
+
+  | 验证项 | 结果 |
+  | --- | --- |
+  | `docker compose config` 解析 | 通过，`NM_ADDRESS=<LAN_ADDR>`／`NM_TRUSTED_PROXY_CIDRS=<LAN_ADDR>` 按预期展开 |
+  | relay 启动 | `healthz` 200、`readyz` 200 |
+  | relay 监听地址 | `ss` 只显示 `<LAN_ADDR>`，**无 `<LAN_ADDR>` 或 `[::]`** |
+  | 一次性 admin | `docker compose run --rm admin init-workspace` 成功，输出 workspace_id 与权威密钥 ID |
+  | 按需管理端 | `/login` 200，监听 `<LAN_ADDR>`，挂载含 `authority` |
+- **收尾**：测试栈已 `down --remove-orphans`（无容器残留）、两个端口已释放、临时目录已删；**顺带清掉一个上一轮（09-30）遗留的 `keen_haslett` 容器**（`admin-web --help` 实验残留、无挂载）。线上两容器与实验前逐字相同（relay `43fe08c` Up 10 天、admin-web `de944a6` Up 7 天），本机与公网 `readyz` 均 200，`18081`／`8081` 监听不变。
+- **验证**：文档链接全通（`deployment.md` 与 README 均 problems=0）；排版门禁通过、句长 0；compose 用 js-yaml 与 `docker compose config` 双重解析；静态检查确认 relay 未挂 `authority`、三处 `read_only` 与 `cap_drop: [ALL]` 齐备、无 pinned 子网。分支 CI `37013444773`、主线 CI `37013881136` 均成功，同 SHA `--ff-only` 快进，分支按精确 lease 删除，仓库只剩干净 `main`。
+- **边界**：验证用的是**线上那份旧镜像（`43fe08c`）**而非 main 构建的新镜像，所以它证明的是「compose 编排正确」而不是「最新镜像可用」；未验证真实反代接入（nginx 示例只经静态审阅，未经 nginx 实跑）；未验证 IPv6 场景；测试主机为 Linux，未验证 macOS／Windows 上 host 网络的差异。三端 tag 发布仍未做过。
+- 证据：本轮无本机证据目录（本机无 docker）；测试主机操作均为一次性、已清理。
+
 ## STATUS-130：管理端产品名与扩展设置页统一；relay 关闭帧修复随本次部署上线
 
 - **需求**：七叔反馈管理端 logo 字体太细，要求与扩展设置页统一；同时把仍是旧镜像的 docker 容器一并更新，手机端断开一会可接受。
