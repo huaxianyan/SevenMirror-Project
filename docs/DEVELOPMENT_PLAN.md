@@ -654,6 +654,16 @@ Android 样板成立后把同一套搬到另两端。三端的产物、版本来
 
 - **边界**：用的是线上旧镜像而非 main 新构建，只证明编排正确；未验证真实 nginx 接入与 IPv6。
 
+## 6.46 执行进展（2026-10-03）：服务端首次正式发布
+
+用户要求 `docker pull <名字>` 可用并考虑 watchtower 自动维护，因此需要 `latest`。先加可移动 tag（Server `8f9c74a`）：**tag 构建时额外推 `latest` 与 `PROTOCOL_VERSION` 值**，都指向同一次运行已验证的 index digest。治理条款**未改**——禁止的是「把可变 tag 写进部署定义」，digest 仍是唯一可部署身份；文档新增「Following a moveable tag」一节写明放弃哪三个保证（可追溯性、回滚便利、roster 回滚下限的不可逆性）。
+
+推送注解标签 `v0.1.0` 后，用户在 GitHub 批准 `release-candidate`，运行 `37105282257` 成功，见 `docs/STATUS.md` 条目 153。**三个 tag 指向同一 digest**（`sha256:4287b545…`）、Release 页 8 个资产、6 个二进制的 SHA-256 与 `SHA256SUMS` 一致。**新建的多 tag 推送代码首次实测通过。**
+
+ledger 已回填本次条目（`validate_registry_release_ledger.py` → 3 entries），但仍无 `approved`（需两个不同决策者）。
+
+**自动化卡点（已查明）**：三端 `release-candidate` 的 `required_reviewers` 仅列 `huaxianyan` 本人，故每次发布都需人工批准；删除该规则可全自动，代价是发布不再有人工确认。**Android 与 Extension 仍未发布。**
+
 ## 7. 工作方式调整（2026-09-15，用户确认）
 目标改为尽快达成三端真实可用，开发与测试方式相应调整。
 

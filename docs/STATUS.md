@@ -555,6 +555,25 @@
 - **边界**：验证用的是**线上那份旧镜像（`43fe08c`）**而非 main 构建的新镜像，所以它证明的是「compose 编排正确」而不是「最新镜像可用」；未验证真实反代接入（nginx 示例只经静态审阅，未经 nginx 实跑）；未验证 IPv6 场景；测试主机为 Linux，未验证 macOS／Windows 上 host 网络的差异。三端 tag 发布仍未做过。
 - 证据：本轮无本机证据目录（本机无 docker）；测试主机操作均为一次性、已清理。
 
+## STATUS-153：服务端首次正式发布 —— 三端发布路径首次真实执行
+
+状态：**发布成功并已回填 ledger**（2026-10-03）；Server `v0.1.0` → `8f9c74a`；**Android 与 Extension 未发布**
+
+- **背景**：用户希望像其他项目一样 `docker pull <名字>` 直接拉取，并考虑用 watchtower 类工具自动维护，因此需要 `latest`。本轮先加可移动 tag（条目 152 后的另一笔：Server `8f9c74a`），再真实执行一次发布。
+- **发布结果**：推送注解标签 `v0.1.0` 后，用户在 GitHub 批准 `release-candidate` environment，运行 `37105282257` 两个 job（`build-and-attest`、`publish-release`）均成功。
+
+| 项 | 结果 |
+| --- | --- |
+| ghcr tag | `latest`、`0.1.0`、`8f9c74a6...` **三个 tag 指向同一 index digest** `sha256:4287b545…` |
+| 平台 manifest | amd64 `sha256:c11dc2bb…`、arm64 `sha256:a491dfd0…` |
+| Release 页面 | 标题只有 `v0.1.0`（无产品名前缀）、8 个资产（6 个二进制 + manifest + `SHA256SUMS`）、非 draft 非 prerelease |
+| 资产核对 | 6 个二进制的 SHA-256 与 `SHA256SUMS` 及 manifest 一致，manifest 的 `source_revision` 为 `8f9c74a` |
+- **新建的多 tag 推送代码首次实测通过**：同一 digest 连续推两个 tag、逐个回读 digest 比对，未出现预判的 `regctl` 问题。
+- **ledger 回填**：治理文档第 91 行要求新发布 digest 尽快加为 `candidate`。已追回本次条目（`published_at 2026-10-03T07:13:04Z`，指向运行 `37105282257`），`validate_registry_release_ledger.py` 输出 **3 entry or entries**、带 `--publication-revision` 也通过，单元测试 OK。排序键是 `(published_at, revision, index_digest)`，新条目时间最新，追加在末尾即可。**注意：仍无 `approved` 条目**——升 `approved` 需两个不同决策者，仍为外部卡点。
+- **自动化发现的真实卡点**：三端 `release-candidate` environment 的保护规则完全相同——`required_reviewers` 的 reviewers 只有 `huaxianyan` 本人（`prevent_self_review=False`）、`branch_policy` 为 `protected_branches: true`。**这就是每次发布都必须人工点批准的原因**。删除 `required_reviewers` 可达成全自动（需仓库管理员在网页操作，三仓库各一次），代价是发布不再有任何人工确认环节；`deployment_branch_policy` 可保留（tag 不受分支策略约束）。
+- **边界**：**本次只发布了服务端**，Android 与 Extension 仍未打 tag；发布确认环节由用户在 GitHub 网页完成，助手无法代劳；`latest` 与 `0.1.0` 会随下一次 tag 构建移动，**digest 仍是唯一不可移动的部署身份**（治理文档条款未改）；未验证 watchtower 实际跟进效果；未验证 arm64 镜像在真实 arm64 主机上运行。
+- 证据：`.tools/release-notes/`（`check-env-protection.py`、`server-env.json`、`index-manifest.json`）。
+
 ## STATUS-130：管理端产品名与扩展设置页统一；relay 关闭帧修复随本次部署上线
 
 - **需求**：七叔反馈管理端 logo 字体太细，要求与扩展设置页统一；同时把仍是旧镜像的 docker 容器一并更新，手机端断开一会可接受。
