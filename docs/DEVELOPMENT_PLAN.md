@@ -664,6 +664,14 @@ ledger 已回填本次条目（`validate_registry_release_ledger.py` → 3 entri
 
 **自动化卡点（已查明）**：三端 `release-candidate` 的 `required_reviewers` 仅列 `huaxianyan` 本人，故每次发布都需人工批准；删除该规则可全自动，代价是发布不再有人工确认。**Android 与 Extension 仍未发布。**
 
+## 6.47 执行进展（2026-10-04）：README 部署示例与一次 flaky 门禁
+
+用户要求 README 以 docker compose 为例给出可复制示例与反代示例配置。README 的「怎么部署」改为代码块（compose 启动、仅需决定 `SEVENMIRROR_IMAGE`、初始化工作区、签发加入码与批准设备、管理端启停），新增「反向代理」与「验证」两小节。见 `docs/STATUS.md` 条目 154。
+
+**顺手修掉一处自己引入的错误**：`deploy/nginx/mirror.conf` 注释仍引用条目 152 已废的网桥网关 `<LAN_ADDR>`，已改为回环。**命令名先核实再写**（初稿把 `issue-pairing-code` 写成 `issue-join-code`）。
+
+**一次主线 CI 失败查清了**：同一 SHA 分支过、主线挂，失败于 `TestReconnectSurvivesAnOldLookupFailureAndHonorsCurrentRevocation` 的 `revoked peer remained registered`；**重跑同一 SHA 后通过**，确认是 flaky。机制：客户端收到撤销关闭帧与注册表条目删除之间有窗口，而该断言不重试（同文件另一处检查用了 2 秒轮询）。严重性不夸大：期间路由仍 fail-closed（session 已 retire、`beginOperation` 判定为假），未发现撤销绕过。近 100 次运行 97 成功、2 失败。**未修该测试**（不属本次需求）；本地无 cgo，无法复现 `-race`。
+
 ## 7. 工作方式调整（2026-09-15，用户确认）
 目标改为尽快达成三端真实可用，开发与测试方式相应调整。
 

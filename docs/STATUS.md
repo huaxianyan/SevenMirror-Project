@@ -574,6 +574,22 @@
 - **边界**：**本次只发布了服务端**，Android 与 Extension 仍未打 tag；发布确认环节由用户在 GitHub 网页完成，助手无法代劳；`latest` 与 `0.1.0` 会随下一次 tag 构建移动，**digest 仍是唯一不可移动的部署身份**（治理文档条款未改）；未验证 watchtower 实际跟进效果；未验证 arm64 镜像在真实 arm64 主机上运行。
 - 证据：`.tools/release-notes/`（`check-env-protection.py`、`server-env.json`、`index-manifest.json`）。
 
+## STATUS-154：README 补可复制的部署示例，并查清一次主线 CI 失败
+
+状态：**已合入 Server main**（2026-10-04）；Server `b708a22`
+
+- **需求**：用户指出 README 改了但「怎么部署」仍只有文字指向详细文档，要求以 docker compose 为例展示示例文件，并给出反代示例配置。
+- **改动**：README 的「怎么部署」从 6 步文字列表改为可直接复制的代码块——compose 启动、唯一需要决定的 `SEVENMIRROR_IMAGE`、`init-workspace`、签发加入码与批准设备、管理端启停；新增「反向代理」与「验证」两小节，前者列出 Caddy 与 nginx 两份示例文件并展开 nginx 的必要配置项，后者给出 `healthz`／`readyz` 与 `ss -ltn` 只出现回环地址的判据。
+- **发现并修正一处自己引入的遗留错误**：`deploy/nginx/mirror.conf` 的注释仍写着「relay 信任 compose.yaml 里钉的网桥网关 `<LAN_ADDR>`」。该值随条目 152 的 host 网络改造已失效，属漏改。已改为回环 `<LAN_ADDR>`，并保留「若改了 relay 绑定地址或代理位置需同步修改」的提示。全仓库已无 `<LAN_ADDR>` 残留。
+- **命令名核实（避免凭印象写）**：初稿写的是 `issue-join-code`，而 CLI 实际只有 `init-workspace`、`issue-pairing-code`、`list-devices`、`list-pending-devices`、`approve-device`、`revoke-device`、`rename-device`、`issue-rotation-code`、`backup-workspace`、`rotate-authority`、`prepare-authority-rotation`。已用脚本逐个比对 README 里出现的命令与 `cmd/admin/main.go`，4 个命令名与 4 个文件引用均核实存在。
+- **排版门禁抓到两处**：README 禁用分号与破折号，初稿各有一处，改为句号分句后门禁通过；句长 0 命中。
+- **主线 CI 一次失败的调查（结论：flaky 竞态，非本次改动引起）**：同一 SHA `b708a22` 分支运行 `37170381810` 成功、主线运行 `37170604319` 失败，`test` job 报 `TestReconnectSurvivesAnOldLookupFailureAndHonorsCurrentRevocation` → `revoked peer remained registered`。**用 `gh run rerun --failed` 重跑同一 SHA 后通过**，是本轮唯一的直接验证。
+- **机制（已定位）**：`Hub.Disconnect` 分两步——先在锁内 `session.retire()` 并解锁，再取 `session.operations` 写锁、二次确认后 `delete(h.devices, …)`。而撤销关闭帧是在 `session.disconnected` 信号上发送并返回后才走 `defer unregister()` → `Disconnect`，因此**客户端收到策略关闭帧与注册表条目消失之间有一个窗口**。测试在第 197 行读到关闭帧后立即断言 `IsConnected`，不重试，因此会落入该窗口。对照组：同文件第 169–175 行检查「原连接离开中继」时用了 2 秒轮询，而第 202 行没有。
+- **严重性判断（不夸大）**：断言失败期间条目仍指向**已 retire 的 session**，`session.ctx` 已取消，所以 `beginOperation` 的 `active` 判定为假、路由返回 `ErrSessionOffline`。即路由仍是 fail-closed，**未发现可利用的撤销绕过**。`IsConnected` 在非测试代码中没有调用方，仅 `Hub.Disconnect` 返回的 `unregister` 闭包走同一条路径；残留条目会被后续 `Register` 的换手流程淘汰（`retire` → `awaitRelease` 等待 `released`）。
+- **边界与影响**：本次**未修该测试**（不属本次需求），但它是真实存在的间歇性门禁抖动——近 100 次 `ci.yml` 运行为 97 成功、2 失败（均在分支）、1 cancelled；历史两次失败中 `34301926022` 是 `-race` 报的另一函数，`36239647388` 无匹配输出。本地无 cgo，**无法在 Windows 上复现 `-race`**（`-race requires cgo`），该竞态只在 CI 的 `-race` 下显现。建议后续按「轮询或等待 released 信号」收口该断言，但需先确认不会掩盖真实缺陷。
+- **验证**：`check-links.py` 对 README 与 deployment.md 均 `problems=0`；排版门禁通过、句长 0；分支 CI `37170381810`、主线 CI 重跑后 `37170604319` 成功；同 SHA `--ff-only` 快进 `f7654e2 → b708a22`，分支已按精确 lease 删除。
+- 证据：`.tools/readme-review/`（`list-admin-commands.py`、`verify-readme-claims.py`、`fix-readme-punctuation.py`）。
+
 ## STATUS-130：管理端产品名与扩展设置页统一；relay 关闭帧修复随本次部署上线
 
 - **需求**：七叔反馈管理端 logo 字体太细，要求与扩展设置页统一；同时把仍是旧镜像的 docker 容器一并更新，手机端断开一会可接受。
