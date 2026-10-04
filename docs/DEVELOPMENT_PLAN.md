@@ -672,6 +672,16 @@ ledger 已回填本次条目（`validate_registry_release_ledger.py` → 3 entri
 
 **一次主线 CI 失败查清了**：同一 SHA 分支过、主线挂，失败于 `TestReconnectSurvivesAnOldLookupFailureAndHonorsCurrentRevocation` 的 `revoked peer remained registered`；**重跑同一 SHA 后通过**，确认是 flaky。机制：客户端收到撤销关闭帧与注册表条目删除之间有窗口，而该断言不重试（同文件另一处检查用了 2 秒轮询）。严重性不夸大：期间路由仍 fail-closed（session 已 retire、`beginOperation` 判定为假），未发现撤销绕过。近 100 次运行 97 成功、2 失败。**未修该测试**（不属本次需求）；本地无 cgo，无法复现 `-race`。
 
+## 6.48 执行进展（2026-10-04）：部署收敛为一文件一条命令
+
+用户要求部署只需一个配置文件、`docker compose up -d` 一条命令，不必维护 `.env`、不必手工建目录，并确认可删 `.env.example`。见 `docs/STATUS.md` 条目 155。
+
+**关键实验**：原样无 `.env` 时 `up -d` 返回 exit 0、容器显示 Started，实际却 `permission denied` 无限重启（静默失败）；命名卷也失败；**容器改 root 运行全部通过**。最终采用 `user: "0:0"`，安全收紧三项（`read_only`、`cap_drop: [ALL]`、`no-new-privileges`）全保留，镜像自身仍声明 `nonroot`。
+
+**网络模式**：保留 host。三条路线已实测，host + 回环绑定是唯一同时满足「一条命令」「值可预置」「容器间不可达」的。
+
+**同轮修掉一个两次阻断主线的 flaky**（`revoked peer remained registered`）：关闭帧与注册表 delete 分属两个协程，断言不重试即落入该窗口。改动仅为轮询等待，撤销断言未改。**决定性证据**：在测试主机的 golang 容器里跑 `-race` 40 次，**修复前 FAIL、修复后 ok**（本机无 cgo 无法复现）。
+
 ## 7. 工作方式调整（2026-09-15，用户确认）
 目标改为尽快达成三端真实可用，开发与测试方式相应调整。
 

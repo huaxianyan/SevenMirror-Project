@@ -590,6 +590,30 @@
 - **验证**：`check-links.py` 对 README 与 deployment.md 均 `problems=0`；排版门禁通过、句长 0；分支 CI `37170381810`、主线 CI 重跑后 `37170604319` 成功；同 SHA `--ff-only` 快进 `f7654e2 → b708a22`，分支已按精确 lease 删除。
 - 证据：`.tools/readme-review/`（`list-admin-commands.py`、`verify-readme-claims.py`、`fix-readme-punctuation.py`）。
 
+## STATUS-155：部署改为一文件一条命令，并修掉一个两次阻断主线的 flaky 测试
+
+状态：**已合入 Server main**（2026-10-04）；Server `2aa2202` + `a681b88`
+
+- **需求**：用户要求部署只需一个配置文件、`docker compose up -d` 一条命令，不必再维护 `.env`、不必手工建目录；并确认可去掉 `.env.example`。
+- **根因**：原快速开始需要 `install -d -m 0700 -o 65532 -g 65532 …` 加 `.env` 两步，两步都是为了「让非 root 容器拥有 Docker 以 root 创建的目录」。而且**助手在条目 154 里写进 README 的那行 `install -d` 就漏了属主参数**，会建出容器写不进去的根目录——手工步骤本身就在制造缺陷。
+- **实验结论（三种方案真机对比，均用线上同一镜像）**：
+
+| 方案 | `up -d` | 实际结果 |
+| --- | --- | --- |
+| 原名、无 `.env`、不建目录 | exit 0、显示 Started | ❌ `permission denied`，无限重启（**静默失败**） |
+| 命名卷挂 `/data` | exit 0 | ❌ 同样权限失败（镜像内无该路径，卷归 root） |
+| **容器以 root 运行** | exit 0 | ✅ `healthz`／`readyz` 200、`init-workspace` 成功、`/login` 200 |
+
+- **选定的实现**：用户释放「不要求非 root」后，改为 `user: "0:0"`。Docker 建出的目录直接可用，无需 `chown`、无需 `prepare` 服务、无需命名卷、无需额外 capability。**安全收紧三项全保留**：`read_only`、`cap_drop: [ALL]`、`no-new-privileges`；镜像自身仍声明 `nonroot:nonroot`（发布流水线 `build_container_artifacts.py` 有这条硬校验，未被触碰）。
+- **实测记录（新 compose 真机端到端）**：relay `healthz`／`readyz` 200、`ss` 只显示 `<LAN_ADDR>`；`init-workspace` 成功且 `authority` 自动收成 `0700`；`issue-pairing-code` 成功；`admin-web` 在**未配 `NM_ADMIN_ORIGIN`** 时 `/login` 200 且日志显示 `expected_origin=http://<LAN_ADDR>`；`backup-workspace` 写进 `backups/`；重复 `up -d` 幂等。
+- **顺手查出两个此前写错的判断**：`NM_ADMIN_ORIGIN` **代码里本就有默认值**（`envOrDefault("NM_ADMIN_ORIGIN", "http://"+address)`），助手此前称它「无法预设」是错的；`NM_TRUSTED_PROXY_CIDRS` 不设时是 `nil`（不信任任何代理），**必须保留**，否则反代后限流会按错地址计数。
+- **网络模式的决定**：用户最终选择保留 host 网络。已实测三条路线，host + 回环绑定是唯一同时满足「一条命令」「值可预置」「容器间不可达」的；bridge 方案需钉子网（与用户已有网络冲突风险）且实测**宿主机可直接连容器 IP**，对容器反而是更小的隔离。实测还确认：容器内绑回环时**端口映射无法从宿主机连入**。
+- **flaky 测试修复（本次另一个独立成果）**：`TestReconnectSurvivesAnOldLookupFailureAndHonorsCurrentRevocation` 的 `revoked peer remained registered` **连续两次阻断主线快进合入**（同一 SHA 在分支上通过）。机制：策略关闭帧由连接自己的协程在 retire 信号关闭时立即写出，而调用 `Disconnect` 的 monitor 协程还需重新取得 hub 锁才能删条目，两者是独立协程；断言读到帧后立即检查，**落入这个真实且有界的窗口**。改动仅为用同文件已有的轮询等待（2 秒 deadline），**撤销断言本体未改**。
+- **修复的决定性证据**：本地无 cgo 无法跑 `-race`（`-race requires cgo`），因此在测试主机的 golang 容器（`apk add gcc musl-dev`，`GOPROXY=goproxy.cn`）上对比跑同一测试 40 次：**修复前 FAIL**（`FAIL github.com/huaxianyan/SyncNotifications-Server/internal/relay`），**修复后 ok**。这是本轮唯一能证明修复有效（而非掩盖）的证据；另在本机无 race 下跑过 200 次与分支 CI 重跑 4 次均通过。
+- **严重性判断（不夸大）**：断言失败期间条目仍指向**已 retire 的 session**，`session.ctx` 已取消，`beginOperation` 的 `active` 判定为假、路由返回 `ErrSessionOffline`，即**仍是 fail-closed**；`IsConnected` 在非测试代码中没有调用方。故这是**测试观测时序错**，不是撤销绕过。
+- **边界**：`data/` 与 `backups/` 新建时为 `0755`（`authority` 由程序自己收 `0700`）——比原 `install -d -m 0700` 松，助手已向用户报告并待定是否让程序收口；容器以 root 运行是用户明确释放的要求，与镜像自身 `nonroot` 声明是两回事；本次未验证真实反代接入；`git push` 本轮两次因网络拖动失败，重试后成功。
+- 证据：本轮无本机持久证据目录（测试均在测试主机临时目录完成并已删除）。
+
 ## STATUS-130：管理端产品名与扩展设置页统一；relay 关闭帧修复随本次部署上线
 
 - **需求**：七叔反馈管理端 logo 字体太细，要求与扩展设置页统一；同时把仍是旧镜像的 docker 容器一并更新，手机端断开一会可接受。
