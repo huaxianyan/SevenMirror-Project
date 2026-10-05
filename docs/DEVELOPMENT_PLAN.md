@@ -682,6 +682,18 @@ ledger 已回填本次条目（`validate_registry_release_ledger.py` → 3 entri
 
 **同轮修掉一个两次阻断主线的 flaky**（`revoked peer remained registered`）：关闭帧与注册表 delete 分属两个协程，断言不重试即落入该窗口。改动仅为轮询等待，撤销断言未改。**决定性证据**：在测试主机的 golang 容器里跑 `-race` 40 次，**修复前 FAIL、修复后 ok**（本机无 cgo 无法复现）。
 
+## 6.49 执行进展（2026-10-05）：工作区自动创建与 state 目录收口
+
+用户逐项确认：暂不支持多个工作区、`init-workspace` 要在 compose 启动时自动完成、`data`／`backups` 收成 `0700`。见 `docs/STATUS.md` 条目 156。
+
+**两个根因**：`init-workspace` 原本不幂等（每次 `INSERT` 一个新随机 ID，会静默多出工作区与私钥）；目录模式只在不存在时生效（`MkdirAll` 不改已存在目录，而 Docker 建的挂载目录是 `0755`）。
+
+**实现**：新增 `prepare` 服务（每次 up 跑一次、退出码 0）+ `relay` 的 `depends_on`；新增 `internal/protecteddir` 统一收口并拒绝符号链接；新增 `NM_BACKUP_DIR` 与 `list-workspaces`。**「只支持一个工作区」放在 CLI 而非数据库约束**——store 层有 3 个测试依赖多工作区来验证隔离性。
+
+**一个差点写错的地方**：曾想给 `prepare` 开 `json-file` 日志以便回查 workspace_id，读到 admin stdout 不得进入日志管道的规定（`issue-pairing-code` 会在 stdout 交付一次性密钥）后回退，改用 `list-workspaces` 补缺口。
+
+**实测**：`0700` 下初始化、备份、校验、relay 健康、宿主机 `cp -a` 全部正常；端到端一条 `up -d` 自动建工作区、三个目录均为 `0700`、重复 up 幂等、私钥数量 = 1。
+
 ## 7. 工作方式调整（2026-09-15，用户确认）
 目标改为尽快达成三端真实可用，开发与测试方式相应调整。
 

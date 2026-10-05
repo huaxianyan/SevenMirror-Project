@@ -614,6 +614,26 @@
 - **边界**：`data/` 与 `backups/` 新建时为 `0755`（`authority` 由程序自己收 `0700`）——比原 `install -d -m 0700` 松，助手已向用户报告并待定是否让程序收口；容器以 root 运行是用户明确释放的要求，与镜像自身 `nonroot` 声明是两回事；本次未验证真实反代接入；`git push` 本轮两次因网络拖动失败，重试后成功。
 - 证据：本轮无本机持久证据目录（测试均在测试主机临时目录完成并已删除）。
 
+## STATUS-156：工作区改为启动时自动创建，state 目录收口 0700
+
+状态：**已合入 Server main**（2026-10-05）；Server `d761cd2`
+
+- **需求（用户逐项确认）**：① 暂不支持多个工作区；② `init-workspace` 要在 compose 启动时自己处理，需要异步就加一个小服务；③ `data`／`backups` 的 `0755` 要收成 `0700`，且确认不影响使用。
+- **根因（原设计的两道裂缝）**：
+  - **`init-workspace` 不幂等**：`CreateWorkspace` 每次用 `rand.Read` 生成新 ID 后直接 `INSERT`，不检查是否已有；`GenerateAuthority` 用 `O_EXCL` 新建带随机 keyID 的文件，也不拒绝目录里已有密钥。⇒ **重复跑会静默多出一个工作区 + 一把多余权威私钥**。助手在条目 155 实测时就误跑过两次（测试目录已删，无实际残留）。
+  - **目录模式只在不存在时生效**：三个入口都有 `os.MkdirAll(dir, 0o700)`，但 `MkdirAll` 不修改已存在目录的模式，而 Docker 建 bind 挂载目录用 `0755`。`authority/` 例外（额外调了 `os.Chmod`），因此只有它是 `0700`。
+- **为什么策略放在 CLI 而非数据库约束**：有 3 个测试（`TestDeviceRevocationIsIdempotentPersistentAndWorkspaceBound`、`TestCredentialRotationCodeIsExactDeviceBoundAndExpires`、`TestWorkspacePreferenceRoundTripsWithOptimisticRevision`）故意在同一 store 里建两个工作区来验证隔离性。⇒ **store 层必须保留多工作区能力，「只支持一个」是产品决策，属于 CLI 入口**。
+- **实现**：
+  - `init-workspace` 检查已有工作区；有则打印现有 ID、输出 `result=already-initialized`、**退出码 0**。退出码必须为 0，否则 `depends_on: service_completed_successfully` 会挡住 relay。
+  - compose 新增 **`prepare` 服务**（`command: ["init-workspace"]`、`network_mode: none`、`restart: "no"`），`relay` 用 `depends_on` 等它完成。
+  - **新增 `internal/protecteddir`**：`Ensure` 建目录后总是收成 `0700`，并拒绝符号链接（否则 `chmod` 会跟着链接收紧别处）。三个入口里重复的 `MkdirAll` 收敛到这一处：registry 走 `admission.Open`，`backups` 走新变量 **`NM_BACKUP_DIR`**（该挂载点由部署声明，不从 registry 路径推导）。
+  - **新增 `list-workspaces`**：`prepare` 的输出不能落日志（见下），工作区 ID 又需要它，故提供按需查询。
+- **一个差点写错的地方**：曾把 `prepare` 的日志驱动改成 `json-file` 以便回查 workspace_id，读到 `docs/deployment-artifact-boundary.md` 第 39–46 行（admin stdout 会在 `issue-pairing-code` 时交付一次性密钥，**不得进入日志驱动或观测管道**）后回退为 `driver: none`，改用 `list-workspaces` 补这个缺口。
+- **`0700` 是否影响使用的实测（用户提问的直接答案）**：在 `0700` 的 `data/` 上 `init-workspace`／`list-workspaces` 成功、备份写进 `0700` 的 `backups/` 成功、`verify-workspace-backup` 输出 `result=verified`、relay `healthz`／`readyz` 200、宿主机 `cp -a` 复制目录成功且权限原样保留。容器以 root 运行，`0700` 完全够用。
+- **端到端实测（真机，新构建二进制 + 真实 compose 文件）**：一条 `up -d` 后 `prepare` 自动运行并 `exited (0)`、relay 等它后启动；**`data`／`authority`／`backups` 三个目录均为 `0700`**；工作区已自动创建；**重复 `up -d` 幂等**且权限仍为 `0700`；**权威私钥数量 = 1**；`issue-pairing-code`、`backup-workspace`（备份目录 `0700`）、`verify-workspace-backup`、`admin-web` `/login 200` 均正常。
+- **边界**：`list-workspaces` 会打印工作区 ID。该 ID 本身不是密钥，加入码与私钥才是一次性秘密，但它属于运维元数据，仍不应进入日志管道。用户释放「不要求非 root」是本次简化与 `0700` 收口的前提，镜像自身仍声明 `nonroot`；`protecteddir` 的模式断言在 Windows 上按仓库已有惯例跳过（该平台 `Chmod` 只支持只读位）；未验证真实反代接入。
+- 证据：本轮本机证据目录已清理（`.tools/perm`、`.tools/perm2`、`.tools/docs`）；测试主机临时文件与目录均已删除。
+
 ## STATUS-130：管理端产品名与扩展设置页统一；relay 关闭帧修复随本次部署上线
 
 - **需求**：七叔反馈管理端 logo 字体太细，要求与扩展设置页统一；同时把仍是旧镜像的 docker 容器一并更新，手机端断开一会可接受。
