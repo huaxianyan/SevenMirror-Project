@@ -634,6 +634,26 @@
 - **边界**：`list-workspaces` 会打印工作区 ID。该 ID 本身不是密钥，加入码与私钥才是一次性秘密，但它属于运维元数据，仍不应进入日志管道。用户释放「不要求非 root」是本次简化与 `0700` 收口的前提，镜像自身仍声明 `nonroot`；`protecteddir` 的模式断言在 Windows 上按仓库已有惯例跳过（该平台 `Chmod` 只支持只读位）；未验证真实反代接入。
 - 证据：本轮本机证据目录已清理（`.tools/perm`、`.tools/perm2`、`.tools/docs`）；测试主机临时文件与目录均已删除。
 
+## STATUS-157：修掉自己引入的目录收紧副作用
+
+状态：**已合入 Server main**（2026-10-06）；Server `e35528c`
+
+- **背景**：用户追问「原本的静默缺口也修理了吗」，助手逐条核对时发现**自己新引入了一个副作用**，而非遗留问题。
+- **缺陷**：`protecteddir.Ensure` 无条件 `os.Chmod(0o700)`，而调用方传的路径是 `filepath.Dir(NM_DATABASE_PATH)` 推导出来的。两种输入会意外落到不该收紧的位置：
+
+| `NM_DATABASE_PATH` | `filepath.Dir` 结果 | 后果 |
+| --- | --- | --- |
+| `registry.db`（裸文件名） | `.` | chmod 当前工作目录 |
+| `/registry.db` | `/` | **chmod 文件系统根目录** |
+
+- **为何是行为变更而非遗留**：旧代码只有 `os.MkdirAll`，而它对已存在目录是 no-op，不会改模式。收紧 0700 这一轮才引入无条件 `chmod`。**严重性不夸大**：默认值 `data/syncnotifications.db` 与 compose 的 `/data/registry.db` 都不触发，只有用户显式传裸文件名或根目录下的裸文件名才会碰到；后果是权限被收紧（不是泄露、不是数据损坏），但确实动了部署不该动的目录。
+- **修法**：`Ensure` 先 `filepath.Clean`，若结果为 `.` 或平台分隔符（根目录）则直接报错，错误文案指明被拒的取值。**为何不用「路径是自己的父目录」判断**：该写法在 Windows 上对 `.` 与 `\` 的语义不同，实测不可靠；`Clean` 后比对分隔符在两个平台都明确。
+- **测试**：新增 `TestEnsureRejectsTheCurrentDirectory`（`.`、`./`、`registry.db/..`）与 `TestEnsureRejectsTheRootDirectory`。
+- **验证**：`internal/protecteddir` 五个测试全过；**串行全量 17 包全通过**；实测裸文件名被拒且报错文案含被拒取值，而 `data/syncnotifications.db` 与 `/data/registry.db` 不受影响。
+- **一个需要说明的观察**：并行全量测试时 `internal/admission` 的 `TestCredentialRotationClosesOldSessionAndAuthenticatesPendingCredential` 在 Windows 上报 `TempDir RemoveAll cleanup: ... file is being used by another process`。**该失败与本轮改动无关**：单独跑三次均通过，串行全量也全通过，是 Windows 上并行临时目录清理的句柄竞争。
+- **边界**：该守卫只防「路径本身就是根或当前目录」，不防「路径是符号链接指向根」以外的其他间接情况（符号链接已被单独拒绝）；未在 Linux 上实测该守卫（本机无 Linux，但 CI 的 Linux job 已通过，且判断逻辑与平台无关）。
+- 证据：本轮本机证据目录已清理（`.tools/check`、`.tools/probe`、`.tools/pathcheck`、`.tools/selfparent`）。
+
 ## STATUS-130：管理端产品名与扩展设置页统一；relay 关闭帧修复随本次部署上线
 
 - **需求**：七叔反馈管理端 logo 字体太细，要求与扩展设置页统一；同时把仍是旧镜像的 docker 容器一并更新，手机端断开一会可接受。
