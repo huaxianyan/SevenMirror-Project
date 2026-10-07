@@ -716,6 +716,18 @@ ledger 已回填本次条目（`validate_registry_release_ledger.py` → 3 entri
 
 **一处无法端到端构造的场景**：试了三种外部手段均无法让「已启动的进程读不到 registry」（SQLite 已持有 fd，权限对已打开 fd 无效），该路径由单元测试覆盖。另注：`docker run --health-cmd` 字符串形式恒走 shell，不能用它验证。
 
+## 6.52 执行进展（2026-10-07）：探针在 TLS 下误报的修复
+
+上一条目把「TLS 模式下探针未验证」列为边界，本轮真机补测**发现了助手自己引入的缺陷**。见 `docs/STATUS.md` 条目 159。
+
+**缺陷**：探针用普通 TLS 校验去连 `NM_ADDRESS`（回环绑定地址），而证书签给域名、自签证书不在系统信任库 ⇒ 验证必失败。实测：`health=unhealthy` 而 `curl -k` 返回 200。
+
+**修法**：用 `VerifyPeerCertificate` 钉部署自己的证书链，跳过主机名匹配但**仍检查有效期与签名**。不用 canary 脚本里的 `CERT_NONE`——那会连过期证书也接受。
+
+**同时整改分层**：初版放在 `cmd/server/`，而仓库模式是 `internal/` 全有测试、`cmd/` 零测试 ⇒ 移到 `internal/readiness` 并补 9 个测试。**这也正是缺陷能被发现的途径**，它无法在真实部署里手工复现。
+
+**真机验证**：TLS 场景从 `unhealthy` 变为 `healthy`，明文场景仍 `healthy`。
+
 ## 7. 工作方式调整（2026-09-15，用户确认）
 目标改为尽快达成三端真实可用，开发与测试方式相应调整。
 
