@@ -704,6 +704,18 @@ ledger 已回填本次条目（`validate_registry_release_ledger.py` → 3 entri
 
 **修法**：`Clean` 后拒绍 `.` 与平台分隔符；不用「自己是自己的父目录」判断，因为该写法在 Windows 上语义不同、实测不可靠。新增两个拒绝测试，串行全量 17 包全通过。
 
+## 6.51 执行进展（2026-10-07）：`readyz` 真读 registry 与容器健康检查
+
+用户同意加 healthcheck，但要求先调研「数据库被打满」风险。见 `docs/STATUS.md` 条目 158。
+
+**先修了一处文档与代码不符**：`deployment.md` 声称 `readyz` 能证明「可从 registry 服务」，而代码里它与 `healthz` 完全相同，都是静态返回。
+
+**争用实测结论**：同进程等待时间约 1:1 跟随持有时间（单连接池的必然结果），但 **WAL 下跨进程读永不阻塞**（写者持有 8s，读仍 70µs）。relay 自身事务都是毫秒级短事务，Docker 默认 `timeout: 30s` 远大于最坏情况，**风险可控**。
+
+**关键约束**：distroless 镜像内**无 shell、curl、wget**，而 healthcheck 在容器内执行 ⇒ 必须给镜像加探针子命令 `server healthcheck`（复用 `config.Load` 取地址，不新增变量）；compose 必须用 **exec 数组**形式。
+
+**一处无法端到端构造的场景**：试了三种外部手段均无法让「已启动的进程读不到 registry」（SQLite 已持有 fd，权限对已打开 fd 无效），该路径由单元测试覆盖。另注：`docker run --health-cmd` 字符串形式恒走 shell，不能用它验证。
+
 ## 7. 工作方式调整（2026-09-15，用户确认）
 目标改为尽快达成三端真实可用，开发与测试方式相应调整。
 

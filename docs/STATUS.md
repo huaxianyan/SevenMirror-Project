@@ -654,6 +654,32 @@
 - **边界**：该守卫只防「路径本身就是根或当前目录」，不防「路径是符号链接指向根」以外的其他间接情况（符号链接已被单独拒绝）；未在 Linux 上实测该守卫（本机无 Linux，但 CI 的 Linux job 已通过，且判断逻辑与平台无关）。
 - 证据：本轮本机证据目录已清理（`.tools/check`、`.tools/probe`、`.tools/pathcheck`、`.tools/selfparent`）。
 
+## STATUS-158：`readyz` 真的读 registry，并加上容器健康检查
+
+状态：**已合入 Server main**（2026-10-07）；Server `914d911`
+
+- **起因**：用户同意在 `readyz` 真检查 registry 的前提下加 healthcheck，但要求先调研「数据库被打满」的风险，风险大就不做。
+- **先修了一处文档与代码不符**：`deployment.md` 原文写「`readyz` proves it can serve from its registry」，而代码里 `/healthz` 与 `/readyz` **完全相同**（都是 `status()` 静态返回字符串，不查任何依赖）。
+- **争用风险实测（用户要求的调研）**：用项目自己的连接配置（`SetMaxOpenConns(1)` + WAL + `busy_timeout=5000`）测两类争用：
+
+| 场景 | 结果 |
+| --- | --- |
+| 同进程：健康查询 vs 正常查询 | 等待时间约 1:1 跟随持有时间（持有 2s → 等待 1.98s；持有 10s → 等待 9.99s） |
+| 跨连接（等价跨进程，如 admin 备份 vs relay 健康检查） | **WAL 下读永不阻塞**：写者持有 8s，读仍只需 70µs |
+
+  结论：只有同进程长持有才会误报，而 relay 自己的事务都由 `LIMIT 256` 与单接收者范围界定、典型毫秒级；Docker 默认 `timeout: 30s` 远大于实测最坏情况。**风险可控**。
+- **关键约束（改变了实现方式）**：实测确认 distroless 镜像内**没有 shell、curl 或 wget**（只有 `/app/server`、`/app/admin`、`/app/admin-web`）。而 healthcheck 在容器内执行，所以 `CMD-SHELL` 形式必然报 `/bin/sh: no such file or directory`。⇒ **必须给镜像加一个探针**。
+- **实现**：
+  - `admission.Store.HealthCheck`：一条 `SELECT COALESCE(MAX(version),0) FROM schema_migrations` 轻读（与 `initialize` 读 schema 版本同形）。
+  - `readyz` 改为真读 registry：读失败返回 **503**（带自己的 2s 超时，因为它与请求处理共用唯一连接）；`store == nil` 时保留原静态响应（测试用的 `NewHandler()` 依赖这一点）。
+  - 新增 `server healthcheck` 子命令：读 `NM_ADDRESS` 与 TLS 配置后请求 `/readyz`，非 `200` 即非零退出。**复用 `config.Load` 而非新增变量**，避免部署里维护第二份地址。
+  - compose 的 relay 加 `healthcheck`：`test: ["CMD", "/app/server", "healthcheck"]`、`interval: 30s`、`timeout: 10s`、`retries: 3`、`start_period: 15s`。**必须用 exec 数组**，shell 形式起不来。
+- **验证（真机，真实 compose 文件 + 新构建二进制）**：relay `health=healthy`，`docker compose ps` 显示 **`running (healthy)`**。
+- **一个无法端到端构造的场景（如实报告）**：想测「进程活着但读不到 registry」→ unhealthy，试了三种外部手段（`chmod 000` 目录、删 WAL/SHM、把 `registry.db` 换成不可读同名文件），**全部仍返回 200**。原因是 SQLite 进程内**已持有文件描述符**，POSIX 权限对已打开的 fd 不再生效。该路径由**单元测试**覆盖（`TestReadinessReportsAnUnreadableRegistry`：关闭 store 后请求 `/readyz` 得到 503）。
+- **另注**：`docker run --health-cmd` 的字符串形式**恒走 shell**（CLI 行为），因此不能用它验证 —— 它报的 `/bin/sh` 缺失是 CLI 包装导致的，**不代表 compose 的 `CMD` 形式失败**。这一点在测试中曾一度误导结论，改用 compose 实测后才确认。
+- **边界**：`/readyz` 的 503 会被现有 canary 当作未就绪（三者都只判 HTTP 200）——这是期望行为，但意味着「registry 真的读不到」时 canary 会重试超时而不是给出明确诊断；未验证 TLS 模式下 `healthcheck` 探针（它按 `NM_TLS_CERT_FILE` 选 https，但未实测自签证书场景）；健康读的频率与 Docker 默认间隔一致，未调整。
+- 证据：本机证据目录已清理（`.tools/hc`、`.tools/docs2`）；测试主机临时文件与镜像均已删除。
+
 ## STATUS-130：管理端产品名与扩展设置页统一；relay 关闭帧修复随本次部署上线
 
 - **需求**：七叔反馈管理端 logo 字体太细，要求与扩展设置页统一；同时把仍是旧镜像的 docker 容器一并更新，手机端断开一会可接受。
