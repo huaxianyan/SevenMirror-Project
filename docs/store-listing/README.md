@@ -20,13 +20,21 @@
 它们是真实界面的展示截图，不是手机与服务真实连通性的测试证据。
 图中回复和操作能力以原通知实际提供的功能为准。
 
+## 产品详情
+
+[中英双语产品详情](PRODUCT_DETAILS.md) 提供简短说明和详细说明，可复制到对应的商店语言字段。
+
 ## 隐私字段
 
 [隐私字段填写说明](PRIVACY_FIELDS.md) 提供单一用途、权限用途、远程代码声明和数据使用说明。
 它不是完整的公开隐私政策，也不是审核通过承诺。
 
 当前版本的本地明文数据和历史保留行为需要如实披露，不能改写成全部静态加密或立即删除。
-提交前仍需准备公开隐私政策 URL，并确认数据类别和数据使用认证与实际行为一致。
+双语静态隐私页面已放在独立的 [privacy-pages 分支](https://github.com/huaxianyan/SevenMirror-Project/tree/privacy-pages)。
+Cloudflare Pages 配置见该分支的 [部署说明](https://github.com/huaxianyan/SevenMirror-Project/blob/privacy-pages/README.md)。
+该分支是长期部署源，政策正文仅在其根目录 `index.html` 维护，不合入 `main`。
+
+目前尚未部署，提交前需填写正式 HTTPS URL，并确认数据类别和数据使用认证与实际行为一致。
 
 图标来自 Extension `v0.1.21` 的 `public/icons/icon-128.png`。
 两张截图未使用真实用户通知、设备名称或配对信息，只使用独立临时浏览器。
