@@ -795,10 +795,30 @@
 - 版本保持 `0.1.21`，上传候选 ZIP 为 `sevenmirror-extension-0.1.21.zip`，大小为 131,969 字节。
 - ZIP SHA-256 为 `28e64410769d36b94d7e45b5e955b94567dd12120e412183fa81f3ef17456019`。
 - 候选包附带 `release-manifest.json` 和 `SHA256SUMS`，是本地构建的已校验产物，未附 GitHub attestation。
-- 尚未创建发布标签、GitHub Release 或商店项；没有操作日常浏览器、发布者账号或服务端部署。
+- 本条记录时尚未创建发布标签、GitHub Release 或商店项；后续 Release 发布见 STATUS-166。
+- 没有操作日常浏览器、发布者账号或服务端部署。
 - 商店提交前仍需提供公开隐私政策 URL，并完成单一用途、权限用途、远程代码和用户数据使用披露。
 - 隐私字段要求已核对 [Chrome 官方说明](https://developer.chrome.com/docs/webstore/cws-dashboard-privacy)。
 - 候选交付产物保留在开发机，测试临时文件已清理；独立安全评审风险口径不变。
+
+## STATUS-166：扩展标签自动发布已启用，v0.1.21 正式发布
+
+- 用户要求扩展按 Server 的方式发布，取消旧的环境审批配置，保留既有检查和主线保护。
+- 发布工作流仅由 `v*` 标签推送触发，移除手动触发入口，`main` 推送不自动发布。
+- `release-candidate` 环境仅允许版本标签，不配置 required reviewer 或等待时间。
+- 扩展 `main` 已快进至 `b2b29de`，更新工作流、发布指南和首版中文发布说明，未改业务代码。
+- 分支 CI [37741998707](https://github.com/huaxianyan/SevenMirror-Extension/actions/runs/37741998707) 通过。
+- 主线 CI [37742160878](https://github.com/huaxianyan/SevenMirror-Extension/actions/runs/37742160878) 通过。
+- 随后推送 `v0.1.21`，自动发布 [37742357576](https://github.com/huaxianyan/SevenMirror-Extension/actions/runs/37742357576) 成功。
+- `build-and-attest` 和 `publish-release` 均成功，没有人工审批，也没有放宽漏洞、版本或产物检查。
+- [v0.1.21 Release](https://github.com/huaxianyan/SevenMirror-Extension/releases/tag/v0.1.21) 提供提交 ZIP、清单和校验和，共 3 份资产。
+- 下载后通过原脚本离线校验、线上资产大小比对和逐文件 GitHub attestation 验证。
+- 签章同时限定仓库、发布工作流、源码 `b2b29de` 的完整 SHA 和 `refs/tags/v0.1.21`。
+- ZIP 大小为 131,969 字节，SHA-256 为 `28e64410769d36b94d7e45b5e955b94567dd12120e412183fa81f3ef17456019`。
+- 正式 ZIP 与 STATUS-165 的本地候选 ZIP 字节相同，发布清单绑定到新的正式源码提交。
+- Release 标题为标签本身，中文正文按规范生成；送审使用 Release ZIP，不使用 GitHub 自动生成的源码压缩包。
+- 本地及远端主题分支已清理，工作区干净；正式交付产物保留，测试下载和日志已清理。
+- 自动发布不等于独立安全评审完成，也不等于商店审核通过；商店隐私政策和数据披露仍需准备。
 
 ## STATUS-130：管理端产品名与扩展设置页统一；relay 关闭帧修复随本次部署上线
 
