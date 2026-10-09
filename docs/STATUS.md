@@ -820,7 +820,26 @@
 - 本地及远端主题分支已清理，工作区干净；正式交付产物保留，测试下载和日志已清理。
 - 自动发布不等于独立安全评审完成，也不等于商店审核通过；商店隐私政策和数据披露仍需准备。
 
+## STATUS-178：Android 通知稳定等待通过构建与模拟器检查，待产品验收
+
+- 用户确认继续，使用已安装的 certifi 公信 CA 严格核验官方 POM，未关闭 TLS 校验。
+- Maven Central 原文件、公开 SHA-256 与本地缓存一致，只补已有 Groovy BOM 的缺失 POM 校验值。
+- 未升级任何依赖或修改锁文件，上一轮 STATUS-177 的校验阻塞已解决。
+- Android 主题分支为 `fix/notification-stability-window`，提交为 `3258e5a11d24c2dd6e33eb42a6965b62d08c1a3c`。
+- 本地继续未完成的单元测试、lint、Debug／Release APK 与仪器测试编译，Gradle 验证成功。
+- [CI 37898515026](https://github.com/huaxianyan/SevenMirror-Android/actions/runs/37898515026) 对该精确提交全部通过。
+- 必需 `build`、`api29-secure-runtime` 与两项漏洞审计均成功，既有风险状态不据此关闭。
+- API 29 模拟器覆盖快速移除、连续修改、取消重发、普通删除与快照版本关系，既有授权测试保留。
+- 候选包位于 `release-artifacts/android/notification-stability/3258e5a/`，包含 Release APK 与说明。
+- APK SHA-256 为 `80e0d7ebc13e74ba770eb4832f404c25c5dec947ea5ec6e02658ac11c61a6334`。
+- 签名验证成功，证书与项目固定身份一致。升级前仍须现场核对手机实际安装身份。
+- 未操作用户手机，未合入主线或发布 Android Release，保留主题分支等待产品流程验收。
+- 未修改服务端或扩展，自定义等待数值仍留待日常使用发现默认值不足后再做。
+- 本轮构建成功日志保存在开发机 `.tools/android-notification-stability/`，临时脚本与 CI 观察日志已清理。
+
 ## STATUS-177：Android 通知稳定等待已编写，验证受阻
+
+> 该轮阻塞已解决，当前状态见 STATUS-178。
 
 - 2026-10-09 用户批准新增与更新等待 1000 毫秒、普通移除缓冲 300 毫秒，改动限定 Android。
 - 自定义数值留待日常使用发现默认值不足后再做，本轮不增加配置界面。
