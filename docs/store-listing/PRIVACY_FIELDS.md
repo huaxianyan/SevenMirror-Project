@@ -1,6 +1,6 @@
 # Chrome Web Store 隐私字段填写说明
 
-适用版本：SevenMirror Extension `v0.1.21`。
+适用版本：SevenMirror Extension `v0.1.22`。
 本文用于填写开发者后台的「隐私权规范」字段，不替代面向用户的隐私政策。
 提交前应确认表单、公开隐私政策和实际运营行为一致。
 
@@ -33,6 +33,13 @@
 ### `system.display`
 
 > 读取显示器的工作区尺寸，将独立通知交互窗口放到可见的屏幕区域，避免窗口出生在错误位置或被系统通知遮挡。该权限用于窗口定位，不用于截屏或采集屏幕内容。
+
+### `offscreen`
+
+> 在扩展界面关闭时播放随扩展打包的通知提示音。页面仅用于音频播放，遵循用户的静默设置，不读取网页或屏幕内容。
+
+音频随 ZIP 分发，不从远程服务加载，也不新增用户数据类别。
+主动点击「试听提示音」时，即使静默开启也会播放。
 
 ### 主机权限
 
@@ -135,6 +142,7 @@ Chrome 官方 FAQ 对静态数据加密提出要求，这一风险需要在送�
 
 - [Chrome 隐私字段说明](https://developer.chrome.com/docs/webstore/cws-dashboard-privacy)
 - [Chrome 用户数据 FAQ](https://developer.chrome.com/docs/webstore/program-policies/user-data-faq)
-- [v0.1.21 本地敏感数据清单](https://github.com/huaxianyan/SevenMirror-Extension/blob/v0.1.21/docs/SENSITIVE_DATA.md)
-- [v0.1.21 配对权限请求实现](https://github.com/huaxianyan/SevenMirror-Extension/blob/v0.1.21/src/options/main.ts)
-- [v0.1.21 后台权限用途实现](https://github.com/huaxianyan/SevenMirror-Extension/blob/v0.1.21/src/background/service-worker.ts)
+- [v0.1.22 本地敏感数据清单](https://github.com/huaxianyan/SevenMirror-Extension/blob/v0.1.22/docs/SENSITIVE_DATA.md)
+- [v0.1.22 配对权限请求实现](https://github.com/huaxianyan/SevenMirror-Extension/blob/v0.1.22/src/options/main.ts)
+- [v0.1.22 后台权限用途实现](https://github.com/huaxianyan/SevenMirror-Extension/blob/v0.1.22/src/background/service-worker.ts)
+- [v0.1.22 提示音与新增权限说明](https://github.com/huaxianyan/SevenMirror-Extension/blob/v0.1.22/docs/notification-sound.md)
