@@ -8,10 +8,24 @@
 
 - Android 同步网络开关已真机验收并合入 `main`，见 STATUS-182；它 rebase 在通知稳定等待之上，两者按该顺序先后快进合入，`main` 当前为 `3d85518`。
 - Android 通知稳定等待（STATUS-180）随上述顺序合入 `main`；手机上的既有测试安装已按设计迁移为开启，日常效果反馈仍缺。
-- 同步网络只覆盖默认网络层的开关；移动数据侧、熄屏与真实切网恢复尚未单独验收。
+- 同步网络的 Wi-Fi 侧与移动数据侧均已验收（STATUS-182、STATUS-183），熄屏与 Doze 下的保持行为尚未验；Debug 包图标缺陷已修，`main` 当前为 `9407a16`。
 - 扩展 `v0.1.22` 的发布与商店边界见 STATUS-176，不能把 GitHub Release 等同于商店已更新。
 - 服务端源码与历史发布情况按对应记录查证，仓库 HEAD 不能替代实际运行镜像。
 - 依赖外部资源的门禁继续按已确认的搁置决策处理，不把搁置写成安全风险已解决。
+
+## STATUS-183：移动数据侧验收通过，Debug 包找回设计图标
+
+- 用户授权临时关闭手机 Wi-Fi 测试移动数据侧；测试结束已把 Wi-Fi、两个同步开关和后台同步恢复到测试前状态。
+- 关 Wi-Fi 后系统默认网络变为 `CELLULAR|VPN`（Clash 对本应用按应用分流，应用实际看到的是 `CELLULAR`），应用自行重连并在移动数据下 `CONNECTION_READY`、快照 `accepted=true`，主页显示「已连接」，说明允许的网络照常工作。
+- 在移动数据下关掉「在移动数据下同步」：主页立刻显示「移动数据下不同步」、说明与「同步网络设置」按钮，偏好写入 `sync-network.cellular=false`，诊断只有 `NETWORK_SYNC_HELD`（`wifi=false cellular=true`）与紧随的 `SOCKET_CLOSED`／`TERMINATION_QUEUED`／`CONNECTION_TERMINATED`，没有排定重连。
+- 把开关打开后不做任何操作即恢复：新代次 `CONNECTION_READY`、`STARTUP_SNAPSHOT accepted=true`，主页回到「已连接」。
+- 重新打开 Wi-Fi 后默认网络变回 `WIFI|VPN`，应用照常在线并记录 `NETWORK_CAPABILITIES_CHANGED`（`wifi=true`）；测试收尾时两个开关均为 `true`，`background-connection.enabled` 与 `notification-stability.enabled` 未变。
+- 用户报告测试版丢图标。原因是 `app/src/debug/AndroidManifest.xml` 仍用早期调试夹具的占位图 `ic_debug_media_test` 覆盖 `android:icon`／`android:roundIcon`，而设计图标在后续提交加入时没有同步移除该覆盖，因此任何 Debug 包都会显示粉色方块。
+- 修复：删除该覆盖，并删掉只被它引用的 `app/src/debug/res/drawable/ic_debug_media_test.xml`；调试夹具的通知图形不引用这个资源。`aapt2 dump badging` 由 `res/drawable/ic_debug_media_test.xml` 变为 `res/mipmap-anydpi-v33/ic_launcher.xml`，手机应用信息页显示的即为设计图标。
+- 该修复在 `fix/debug-launcher-icon` 分支（提交 `9407a16`），分支 CI [39795047083](https://github.com/huaxianyan/SevenMirror-Android/actions/runs/39795047083) 各项成功；`api29-secure-runtime` 与两项 OSV 立即变绿，`build` 的 check 上报延迟约十五分钟，第一次推送 `main` 因必需检查尚未为绿被 ruleset 拒绝，等待真实检查变绿后原样重试通过，没有绕过门禁或伪造状态。
+- 随后快进合入 `main`（主线 CI [39797505658](https://github.com/huaxianyan/SevenMirror-Android/actions/runs/39797505658) 成功），远端按精确 SHA lease 删除主题分支、本地 `-d` 删除，本地与实际远端只剩 `main` = `9407a16`。
+- 手机当前运行该 Debug 包（签名与正式身份一致、保留数据），测试后 `/sdcard/ui.xml` 已删除，截图与诊断日志在开发机 `E:/Dev/notification-mirroring/.tools/sync-network-verify/`。
+- 未验证：熄屏与 Doze 下的保持行为、真实跨网漫游、移动数据与 Wi-Fi 同时可用时的优先级之外的其他组合；扩展与服务端未改动，未触碰 <TEST_HOST> 部署。
 
 ## STATUS-182：Android 可按网络开关同步，已真机验收并合入 main
 
