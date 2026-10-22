@@ -1,15 +1,34 @@
 # 实施状态
 
-> 更新时间：2026-10-13
+> 更新时间：2026-10-22
 
 ## 当前主线
 
 项目处于日常使用与按问题修复阶段。跨端交接以本仓库为唯一入口，组件源码和专属技术文档分别维护。
 
-- Android 通知稳定等待仍在主题分支，最新记录为 STATUS-180。该功能尚未合入 `main`，真机开关验收及后续升级授权仍待确认。
+- Android 同步网络开关已真机验收并合入 `main`，见 STATUS-182；它 rebase 在通知稳定等待之上，两者按该顺序先后快进合入，`main` 当前为 `3d85518`。
+- Android 通知稳定等待（STATUS-180）随上述顺序合入 `main`；手机上的既有测试安装已按设计迁移为开启，日常效果反馈仍缺。
+- 同步网络只覆盖默认网络层的开关；移动数据侧、熄屏与真实切网恢复尚未单独验收。
 - 扩展 `v0.1.22` 的发布与商店边界见 STATUS-176，不能把 GitHub Release 等同于商店已更新。
 - 服务端源码与历史发布情况按对应记录查证，仓库 HEAD 不能替代实际运行镜像。
 - 依赖外部资源的门禁继续按已确认的搁置决策处理，不把搁置写成安全风险已解决。
+
+## STATUS-182：Android 可按网络开关同步，已真机验收并合入 main
+
+- 用户要求增加「同步网络」设置，可分别开关移动数据与 Wi-Fi 下的同步；Android 客户端已连续使用多日无异常，并确认设备已直连开发机、以上一支主题分支为基线、先合上一支再合本支。
+- 设置位于「同步与默认设置 → 同步网络」，两个开关默认开启，升级沿用当天行为；旧版本没有这个键，读到即默认开。
+- 保存立即生效：当前网络被排除时立刻拆掉连接，不必等下一次网络回调；恢复由网络回调或开关变更触发，不排退避重试。
+- 被排除的网络按有意保持处理，不当作失败：状态灯为黄、标题写「Wi-Fi 下不同步」或「移动数据下不同步」，正文说明是哪种网络被排除，唯一动作改为进入该设置；诊断新增 `NETWORK_SYNC_HELD` 事件。
+- 判定用默认网络的底层承载，叠在上面的 VPN 不改变结论；以太网与蓝牙不受该设置限制，没有默认网络仍按普通掉线处理。
+- 保持只在连接层生效：注册与凭据轮换是用户手动发起的一次性交换，不因开关被中断，之后任何连接先读设置；保持期间连接失败的重连上报也不排定时器。
+- 本机原缺少签名材料，按归档记录从 NAS `Android Signing/SevenMirror-Android/` 恢复到仓库 `.signing/`（已被忽略），keystore SHA-256 与来源一致，证书 SHA-256 `3e422af3…` 与手机已装版本相同，因此 `adb install -r` 保留数据，未清数据、未重新入网、未动 Keystore 身份。
+- 真机（Pixel 10 Pro，API 37，默认网络为 Wi-Fi 108，其上叠可绕过的 Clash VPN，实际 transports 为 `WIFI`）验收：关掉 Wi-Fi 同步后主页立刻显示「Wi-Fi 下不同步」、黄色状态点、「同步网络设置」按钮与说明，偏好写入 `sync-network.wifi=false`，诊断只有 `NETWORK_SYNC_HELD`、`SOCKET_CLOSED`、`TERMINATION_QUEUED`、`CONNECTION_TERMINATED`，此后一分钟内没有新的连接尝试；点按钮进入「同步与默认设置」；把开关打开后不做任何手动操作即出现新代次 `CONNECTION_READY` 与 `STARTUP_SNAPSHOT accepted=true`，主页回到「已连接」。
+- 真机发现并修复两处：首页标题原本仍写「连接已中断」，把有意保持读成故障，改为写明被排除的网络；关闭 socket 时其自身关闭上报会排一次注定被拒的重连，现改为保持期间不排重连。
+- `gradle/verification-metadata.xml` 补充缺失的 `groovy-bom-4.0.29.pom` 校验值，值与 Maven Central 公布的 SHA-256 及上一支已有一致；缺它时本机 lint 工具依赖校验直接失败。
+- 本地统一验证通过：KAPT advisory guard、协议检查、37 项单元测试（含新网络判定矩阵，覆盖默认全开、关 Wi-Fi、关移动数据、VPN 下层与无默认网络）、lint、Debug APK、仪器测试编译。
+- 按用户指定的顺序收尾：本支 rebase 到 `fix/notification-stability-window` 之上，新提交 `f873dc6bd`／`3d85518`，分支 CI [39720256010](https://github.com/huaxianyan/SevenMirror-Android/actions/runs/39720256010) 全部成功；随后先把该分支的 `3bd0956` 快进合入 `main`（主线 CI [39721171246](https://github.com/huaxianyan/SevenMirror-Android/actions/runs/39721171246) 成功），再把本支快进合入 `main`。未创建 PR、未豁免保护。
+- 测试后偏好与实验前逐项一致，只多出 `sync-network.wifi`、`sync-network.cellular`（均为 `true`）与上一支迁移写入的 `notification-stability.enabled=true`；接收设备文件的作用域键与两项选择未变。设备端 `/sdcard/ui.xml` 已删除，证据在开发机 `E:/Dev/notification-mirroring/.tools/sync-network-verify/`。
+- 未打标签、未发布 Release；熄屏、真实切网、移动数据侧与后台服务持有时尚未单独验收。扩展与服务端未改动，未触碰 <TEST_HOST> 部署。
 
 ## STATUS-181：建立四仓库约定与唯一交接入口
 
