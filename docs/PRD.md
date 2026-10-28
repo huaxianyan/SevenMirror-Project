@@ -1224,11 +1224,12 @@ Android 和 Chrome 均显示：
 项目从开始即拆分为三个独立 Git 仓库，未来分别推送到 GitHub：
 
 ```text
-notification-mirroring/     # 本地协调工作区，仅保存跨项目文档
-├─ server/                  # Linux 服务端独立 repo；协议权威来源
-├─ chrome-extension/        # Chrome Manifest V3 扩展独立 repo
-├─ android/                 # Android 应用独立 repo
-└─ docs/                    # 当前工作区中的 PRD/实施计划
+SevenMirror-Project/       # 总仓库工作树（本仓库），仅保存跨项目文档
+├─ docs/                    # 跨项目 PRD／实施计划
+└─ repos/                   # 本地三端工作区，不入库
+   ├─ server/               # Linux 服务端独立 repo；协议权威来源
+   ├─ chrome-extension/     # Chrome Manifest V3 扩展独立 repo
+   └─ android/              # Android 应用独立 repo
 ```
 
 协议 schema、错误码和测试向量以 `server` 仓库发布的协议版本为权威来源；Android 和 Chrome 仓库保存固定版本的 vendored 副本及上游 tag/SHA-256，不依赖本地相对路径。跨仓库协议变更必须先发布协议版本，再由两个客户端显式升级。三个仓库均需拥有独立 README、当前 `GPL-3.0-only` License、非追溯许可证切换说明、CI、版本和可复现构建方式；切换边界及以前已发布的 MIT 授权保持有效。

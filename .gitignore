@@ -13,3 +13,8 @@ dist/
 *.aab
 .DS_Store
 Thumbs.db
+
+# 本地多仓库工作区：三端组件源码与开发机证据目录，不入库
+repos/
+.tools/
+.smoke-tmp/

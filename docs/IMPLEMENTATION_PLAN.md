@@ -89,34 +89,35 @@
 
 ## 3. 多仓库与模块结构
 
-本地工作区包含三个相互独立的 Git 仓库；未来分别推送到三个 GitHub Repository。工作区根目录仅保存跨项目规划文档，不作为产品代码仓库。
+本地工作区包含三个相互独立的 Git 仓库，分别推送到三个 GitHub Repository；它们放在总仓库工作树的 `repos/` 下并保持不入库，总仓库自身只保存跨项目规划文档，不作为产品代码仓库。
 
 ```text
-notification-mirroring/             # 本地协调工作区，不发布产品制品
-├─ docs/                            # 跨项目 PRD 和实施计划
-├─ server/                          # 独立 Git repo：Linux 服务端
-│  ├─ cmd/server/
-│  ├─ cmd/admin/
-│  ├─ internal/
-│  ├─ protocol/proto/               # 协议规范的权威来源
-│  ├─ protocol/test-vectors/
-│  ├─ deploy/
-│  └─ .github/workflows/
-├─ chrome-extension/                # 独立 Git repo：Chrome 扩展
-│  ├─ src/background/
-│  ├─ src/popup/
-│  ├─ src/options/
-│  ├─ src/crypto/
-│  ├─ protocol/vendor/              # 固定版本的协议副本
-│  └─ .github/workflows/
-└─ android/                         # 独立 Git repo：Android 应用
-   ├─ app/
-   ├─ core-notification/
-   ├─ core-protocol/
-   ├─ core-crypto/
-   ├─ core-storage/
-   ├─ protocol/vendor/              # 固定版本的协议副本
-   └─ .github/workflows/
+SevenMirror-Project/               # 总仓库工作树（本仓库），不发布产品制品
+├─ docs/                           # 跨项目 PRD 和实施计划
+└─ repos/                          # 本地三端工作区，不入库（.gitignore）
+   ├─ server/                      # 独立 Git repo：Linux 服务端
+   │  ├─ cmd/server/
+   │  ├─ cmd/admin/
+   │  ├─ internal/
+   │  ├─ protocol/proto/           # 协议规范的权威来源
+   │  ├─ protocol/test-vectors/
+   │  ├─ deploy/
+   │  └─ .github/workflows/
+   ├─ chrome-extension/            # 独立 Git repo：Chrome 扩展
+   │  ├─ src/background/
+   │  ├─ src/popup/
+   │  ├─ src/options/
+   │  ├─ src/crypto/
+   │  ├─ protocol/vendor/          # 固定版本的协议副本
+   │  └─ .github/workflows/
+   └─ android/                     # 独立 Git repo：Android 应用
+      ├─ app/
+      ├─ core-notification/
+      ├─ core-protocol/
+      ├─ core-crypto/
+      ├─ core-storage/
+      ├─ protocol/vendor/          # 固定版本的协议副本
+      └─ .github/workflows/
 ```
 
 ### 3.1 协议治理
@@ -127,7 +128,7 @@ notification-mirroring/             # 本地协调工作区，不发布产品制
 - 服务端发布协议 tag/Release 后，Android 和 Chrome 通过同步脚本更新 vendored schema；
 - 客户端记录 `PROTOCOL_VERSION`、上游 tag 和 schema SHA-256；
 - 每个客户端 CI 校验 vendored schema 与声明的哈希一致；
-- 本地协调工作区提供跨仓库契约/E2E 编排，但每个仓库自身必须能独立构建；
+- 三端工作区提供跨仓库契约／E2E 编排，但每个仓库自身必须能独立构建；
 - 协议生成代码不得手工修改，生成命令必须在各仓库和 CI 中可复现；
 - 协议变更顺序为：服务端协议 PR → 发布协议版本 → 两个客户端升级 → 服务端启用新能力，禁止客户端依赖未发布 schema。
 

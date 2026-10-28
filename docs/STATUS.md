@@ -10,6 +10,7 @@
 - Android 通知稳定等待（STATUS-180）随上述顺序合入 `main`；手机上的既有测试安装已按设计迁移为开启，日常效果反馈仍缺。
 - 同步网络的 Wi-Fi 侧与移动数据侧均已验收（STATUS-182、STATUS-183）；Debug 包图标缺陷已修，`main` 当前为 `9407a16`。
 - 熄屏与 Doze 下的保持行为、真实跨网漫游由用户决定留待日常使用中观察，不单独立项验收。
+- 本地多仓库工作区已由用户迁到本仓库工作树的 `repos/` 下（`repos/android` 等三端仓库），`repos/`、`.tools/`、`.smoke-tmp/` 已在 `.gitignore` 忽略；历史条目里的 `notification-mirroring/...` 路径按此对应。
 - 扩展 `v0.1.22` 的发布与商店边界见 STATUS-176，不能把 GitHub Release 等同于商店已更新。
 - 服务端源码与历史发布情况按对应记录查证，仓库 HEAD 不能替代实际运行镜像。
 - 依赖外部资源的门禁继续按已确认的搁置决策处理，不把搁置写成安全风险已解决。
@@ -25,7 +26,7 @@
 - 修复：删除该覆盖，并删掉只被它引用的 `app/src/debug/res/drawable/ic_debug_media_test.xml`；调试夹具的通知图形不引用这个资源。`aapt2 dump badging` 由 `res/drawable/ic_debug_media_test.xml` 变为 `res/mipmap-anydpi-v33/ic_launcher.xml`，手机应用信息页显示的即为设计图标。
 - 该修复在 `fix/debug-launcher-icon` 分支（提交 `9407a16`），分支 CI [39795047083](https://github.com/huaxianyan/SevenMirror-Android/actions/runs/39795047083) 各项成功；`api29-secure-runtime` 与两项 OSV 立即变绿，`build` 的 check 上报延迟约十五分钟，第一次推送 `main` 因必需检查尚未为绿被 ruleset 拒绝，等待真实检查变绿后原样重试通过，没有绕过门禁或伪造状态。
 - 随后快进合入 `main`（主线 CI [39797505658](https://github.com/huaxianyan/SevenMirror-Android/actions/runs/39797505658) 成功），远端按精确 SHA lease 删除主题分支、本地 `-d` 删除，本地与实际远端只剩 `main` = `9407a16`。
-- 手机当前运行该 Debug 包（签名与正式身份一致、保留数据），测试后 `/sdcard/ui.xml` 已删除，截图与诊断日志在开发机 `E:/Dev/notification-mirroring/.tools/sync-network-verify/`。
+- 手机当前运行该 Debug 包（签名与正式身份一致、保留数据），测试后 `/sdcard/ui.xml` 已删除，截图与诊断日志在开发机 `E:/Dev/SevenMirror-Project/.tools/sync-network-verify/`。
 - 未验证：熄屏与 Doze 下的保持行为、真实跨网漫游、移动数据与 Wi-Fi 同时可用时的优先级之外的其他组合；扩展与服务端未改动，未触碰 <TEST_HOST> 部署。
 
 ## STATUS-182：Android 可按网络开关同步，已真机验收并合入 main
@@ -42,7 +43,7 @@
 - `gradle/verification-metadata.xml` 补充缺失的 `groovy-bom-4.0.29.pom` 校验值，值与 Maven Central 公布的 SHA-256 及上一支已有一致；缺它时本机 lint 工具依赖校验直接失败。
 - 本地统一验证通过：KAPT advisory guard、协议检查、37 项单元测试（含新网络判定矩阵，覆盖默认全开、关 Wi-Fi、关移动数据、VPN 下层与无默认网络）、lint、Debug APK、仪器测试编译。
 - 按用户指定的顺序收尾：本支 rebase 到 `fix/notification-stability-window` 之上，新提交 `f873dc6bd`／`3d85518`，分支 CI [39720256010](https://github.com/huaxianyan/SevenMirror-Android/actions/runs/39720256010) 全部成功；随后先把该分支的 `3bd0956` 快进合入 `main`（主线 CI [39721171246](https://github.com/huaxianyan/SevenMirror-Android/actions/runs/39721171246) 成功），再把本支快进合入 `main`。未创建 PR、未豁免保护。
-- 测试后偏好与实验前逐项一致，只多出 `sync-network.wifi`、`sync-network.cellular`（均为 `true`）与上一支迁移写入的 `notification-stability.enabled=true`；接收设备文件的作用域键与两项选择未变。设备端 `/sdcard/ui.xml` 已删除，证据在开发机 `E:/Dev/notification-mirroring/.tools/sync-network-verify/`。
+- 测试后偏好与实验前逐项一致，只多出 `sync-network.wifi`、`sync-network.cellular`（均为 `true`）与上一支迁移写入的 `notification-stability.enabled=true`；接收设备文件的作用域键与两项选择未变。设备端 `/sdcard/ui.xml` 已删除，证据在开发机 `E:/Dev/SevenMirror-Project/.tools/sync-network-verify/`。
 - 未打标签、未发布 Release；熄屏、真实切网、移动数据侧与后台服务持有时尚未单独验收。扩展与服务端未改动，未触碰 <TEST_HOST> 部署。
 
 ## STATUS-181：建立四仓库约定与唯一交接入口
