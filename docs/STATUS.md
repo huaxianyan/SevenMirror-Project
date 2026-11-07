@@ -1,6 +1,6 @@
 # 实施状态
 
-> 更新时间：2026-10-22
+> 更新时间：2026-11-08
 
 ## 当前主线
 
@@ -10,10 +10,28 @@
 - Android 通知稳定等待（STATUS-180）随上述顺序合入 `main`；手机上的既有测试安装已按设计迁移为开启，日常效果反馈仍缺。
 - 同步网络的 Wi-Fi 侧与移动数据侧均已验收（STATUS-182、STATUS-183）；Debug 包图标缺陷已修，`main` 当前为 `9407a16`。
 - 熄屏与 Doze 下的保持行为、真实跨网漫游由用户决定留待日常使用中观察，不单独立项验收。
+- Android 首个正式版 `v0.1.0` 已发布，三端发布流程现已统一为标签自动发布、无人工审批，见 STATUS-184。手机尚未安装正式包，`main` 为 `0a50771`。
 - 本地多仓库工作区已由用户迁到本仓库工作树的 `repos/` 下（`repos/android` 等三端仓库），`repos/`、`.tools/`、`.smoke-tmp/` 已在 `.gitignore` 忽略；历史条目里的 `notification-mirroring/...` 路径按此对应。
 - 扩展 `v0.1.22` 的发布与商店边界见 STATUS-176，不能把 GitHub Release 等同于商店已更新。
 - 服务端源码与历史发布情况按对应记录查证，仓库 HEAD 不能替代实际运行镜像。
 - 依赖外部资源的门禁继续按已确认的搁置决策处理，不把搁置写成安全风险已解决。
+
+## STATUS-184：Android 首个正式版 v0.1.0 发布，三端发布流程统一
+
+- 用户要求发布 Android 正式版本，并按已定 README 规范重写仓库门面、发布说明用中文、发布流程与另两端一致（全自动，不需要人工点批准）。
+- README 重写为规范结构：图标与标题居中、定位语、截图、特性、快速开始（含自行构建）、使用与配置、文档索引、许可证。新增 `docs/images/icon.png`（由自适应图标前景与底色合成）与两张真机截图（首页、同步与默认设置），状态栏已裁掉。发布流程细节从 README 移出，仍留在 `docs/release-provenance.md` 与 `docs/release-actions.md`。
+- 三个中文校验脚本对 README 与发布说明均为零命中（排版、风格、长句）。
+- 发布说明改为 `## 新功能` 一节（首个版本没有修复项）：12 条能力、升级说明、`/blob/v0.1.0/` 详细记录链接、许可证尾句，全文 `SevenMirror Android`，不出现中文产品名。
+- 门禁脚本升级到现行约定：去掉 `--summary-heading`，改为 `--feature-heading` / `--fix-heading`，要求至少一个分类节、每节必须有条目、围栏代码块里的示例不计入条目；测试从 7 项扩到 11 项。
+- 产物命中去掉内部版本号，改为 `sevenmirror-android-0.1.0.apk`，与扩展仓库 `sevenmirror-extension-0.1.22.zip` 一致；`release-manifest.json` 增加 `abis`，从 APK 内实际文件得出。
+- 发现并修正两处判定缺陷：`apkanalyzer files list` 输出带前导 `/`，ABI 名含 `-`，初版正则两处都没覆盖；另把「文件列表里没有 AndroidManifest.xml」判为工具失败，避免把工具报错当成「无原生库」。
+- 工作流构建信息表补齐版本号、架构、min/target SDK、包名、签名证书 SHA-256、源码提交，全部取自校验过的 manifest。
+- 发布治理按用户要求与另两端对齐：`release-candidate` environment 移除 required reviewers，branch policy 从「仅受保护分支」改为自定义 `v*`（类型 tag）；工作流移除 `workflow_dispatch`，只接受标签推送。此前「Android 保留人工审批」的约定据此作废。
+- 走完整流程：主题分支 `release/v0.1.0` → CI [42390074427](https://github.com/huaxianyan/SevenMirror-Android/actions/runs/42390074427) 全绿 → 快进合入 `main` → 主线 CI [42390997063](https://github.com/huaxianyan/SevenMirror-Android/actions/runs/42390997063) 全绿 → 打注解标签 `v0.1.0` 指向 `0a50771df8ebbd9066740d05219f194982413516` → 发布工作流 [42392001987](https://github.com/huaxianyan/SevenMirror-Android/actions/runs/42392001987) 全程无人工介入成功。未创建 PR，未豁免保护。
+- 发布后本地重新构建 release APK 并跑 `build_release_artifacts.py` 自检通过，才推送标签；构建信息表里的架构为 `arm64-v8a, armeabi-v7a, x86, x86_64`。
+- 线上复核：`sha256sum -c SHA256SUMS` 通过，签名证书 `3e422af3…` 与既有安装一致（可覆盖升级），`versionCode 1`、`versionName 0.1.0`、不含 debuggable 标志，四个资产均无显示标签，标题只有标签本身。
+- 首轮下载两次被截断（8.7 MB、23 MB，实际 32.8 MB），`gh release download` 与单次 curl 都未报错，改用断点续传才完整；结论以 SHA-256 校验为准，不能只看下载命令退出码。
+- 未在手机上安装正式包：手机仍是同一身份的 Debug 构建，覆盖安装与真机验收待用户授权。主题分支已按精确 SHA 删除，本地与实际远端只剩 `main`。
 
 ## STATUS-183：移动数据侧验收通过，Debug 包找回设计图标
 
