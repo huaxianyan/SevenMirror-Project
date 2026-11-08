@@ -16,6 +16,21 @@
 - 服务端源码与历史发布情况按对应记录查证，仓库 HEAD 不能替代实际运行镜像。
 - 依赖外部资源的门禁继续按已确认的搁置决策处理，不把搁置写成安全风险已解决。
 
+## STATUS-188：服务端 v0.1.2 发布并把 <TEST_HOST> 切到新镜像，数据未受影响
+
+- 用户要求发布新的服务端版本并更新测试环境部署，且不能影响现有数据。由本轮自行决定版本号为 `v0.1.2`。
+- 发布说明按现行规范写（`## 问题修复`，讲清 12 条标准库告警与工具链升级，并说明协议仍为 `0.1.0`、升级只是换镜像）。同时把服务端的发布说明门禁从旧的 `## 主要更新` 升到现行分类约定，测试 11 项通过。
+- 标签 `v0.1.2` 指向 `bc5b0432f60577103861b6706827c925ff147491`，发布工作流 [42501495495](https://github.com/huaxianyan/SevenMirror-Server/actions/runs/42501495495) 的 `build-and-attest` 与 `publish-release` 均成功，全程无人工审批。
+- 镜像索引为 `sha256:e0afd808f63d789b6d62726c0a783b5ef5d2bb71f519464a94cfc93941df1cb1`（amd64 `sha256:eca96e69…`、arm64 `sha256:6d6d8036…`），两个平台的可阻断发现均为空；构建用 Go 1.27.3。
+- `deploy/compose/compose.yaml` 与 `security/registry-release-ledger.json` 已按新摘要更新（ledger 6 条，校验脚本通过），提交 `2a29eeb`。
+- 部署前用当时运行的 v0.1.1 镜像执行 `backup-workspace` 并 `verify-workspace-backup` 得到 `result=verified`，备份落在 `/srv/sevenmirror/backups/pre-v0.1.2`；随后停止 relay 与 admin-web，把 `data/`、`authority/` 原样复制到 `backups/pre-v0.1.2-raw-<时间戳>`。
+- 只改 `.env` 的 `SEVENMIRROR_IMAGE` 一行（旧文件留存为 `.env.pre-e0afd80`），先 `docker pull` 再 `up -d`；relay 与 admin-web 均已重建到新摘要。
+- 切换后核对：工作区 ID 与创建时间未变（`GdOsMUd9…`，2026-09-08），权威密钥 ID 未变，设备清单仍为 7 台 Android 与两台 active Chrome，relay 健康且 `RestartCount=0`，本地 `/readyz` 200，公网设备入口 `/readyz` 200，公网管理端 `/login` 200。`/login` 直接打宿主回环会拿到 400，是 Origin 校验的正常表现，不是故障。
+- 回滚路径：`.env` 换回 `.env.pre-e0afd80` 后 `up -d` 即可，v0.1.1 镜像仍在本地。
+- 溯源文档补 `v0.1.2 publication and deployment` 一节（`46424b7`）；服务端主线 CI [42502667391](https://github.com/huaxianyan/SevenMirror-Server/actions/runs/42502667391) 通过，本地远端只剩 `main`。
+- 提醒：`v0.1.2` 的 Release 正文里的构建信息表只有二进制产物的 SHA-256，没有容器摘要行；容器摘要记录在仓库的溯源文档与 ledger 里。
+- 未验证：手机端在切换后重新连上并成功投递（切换时手机不在线），下次手机上线即可确认；这轮没有动 Android、扩展或总仓库的部署。
+
 ## STATUS-187：开头清单改为纯文本本仓库名；服务端 Go 版本与扫描器升级并合入
 
 - 用户反馈「本仓库」这一说法不自然，改为四个仓库名称一律统一，当前仓库那一项只是不加超链接的纯文本。四个 README 同步修改。
