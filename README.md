@@ -3,7 +3,7 @@
 
   # SevenMirror 项目
 
-  本仓库 · [Android 应用](https://github.com/huaxianyan/SevenMirror-Android) · [浏览器扩展](https://github.com/huaxianyan/SevenMirror-Extension) · [服务端](https://github.com/huaxianyan/SevenMirror-Server)
+项目总仓库 · [Android 应用](https://github.com/huaxianyan/SevenMirror-Android) · [浏览器扩展](https://github.com/huaxianyan/SevenMirror-Extension) · [服务端](https://github.com/huaxianyan/SevenMirror-Server)
 </div>
 
 SevenMirror 把一个 Android 手机上的系统通知镜像到同一私有空间里已授权的浏览器，并允许在浏览器里回复或清除通知。整套系统可以完全自托管，通知正文全程端到端加密，服务端默认关闭公开注册。
