@@ -16,6 +16,20 @@
 - 服务端源码与历史发布情况按对应记录查证，仓库 HEAD 不能替代实际运行镜像。
 - 依赖外部资源的门禁继续按已确认的搁置决策处理，不把搁置写成安全风险已解决。
 
+## STATUS-186：四仓库 README 统一开头，服务端合并被依赖门禁挡住
+
+- 用户要求给服务端与扩展的 README 补图标，并在开头加一行四个仓库的地址，本仓库那一项写作「本仓库」；四个仓库保持一致。
+- 扩展与服务端仓库此前不在本机，本轮按需克隆到 `repos/chrome-extension`（`b1556ac`）与 `repos/server`（`4fb70b3`）。
+- 四个 README 开头统一为：居中图标（同一份 240 px 文件，取自扩展 `public/icons/icon-128.png` 放大，四仓库 MD5 相同）、标题、一行仓库清单（项目总仓库、Android 应用、浏览器扩展、服务端，当前仓库显示「本仓库」）。
+- 扩展与服务端原有的「仓库地址：<…>」与「三个独立仓库之一」删掉，避免与新增清单重复；总仓库组件表保留职责说明，链接改为纯名称。
+- Android 与总仓库的定位语去掉与新清单重复的兄弟仓库链接。三个中文脚本对四份 README 零命中；顺带修掉总仓库 README 里两处历史遗留（一个分号、一句超长句）。
+- Android：`docs/readme-icon` → CI [42495024135](https://github.com/huaxianyan/SevenMirror-Android/actions/runs/42495024135) → 主线 CI [42495879855](https://github.com/huaxianyan/SevenMirror-Android/actions/runs/42495879855) 通过，分支已删，`main` 为 `2e70319`。
+- 扩展：分支 `docs/readme-icon` 上除文档外另有 `build: update vite to the version the audit gate accepts`（`054c147`）。原因不是本轮改动：`npm audit` 门禁当日报告 vite ≤6.4.3 的 launch-editor 与 `server.fs.allow` 告警，锁文件升到 6.4.5 后通过，未改运行时依赖。分支 CI 通过后快进合入 `main`，主线 CI [42494917615](https://github.com/huaxianyan/SevenMirror-Extension/actions/runs/42494917615) 通过，分支已删。
+- 总仓库：README 与 `docs/images/icon.png` 提交为 `81ebbdd` 并推送。
+- 服务端**未合入**：分支 `docs/readme-icon`（`2c119b7`）的必需检查 `test` 失败在 `govulncheck`，报 12 条可达标准库告警（GO-2026-6599/6600/6603/6605/6607/6608/6610/6611/6612/6613/6617/6809），修复版本为 Go 1.26.9–1.26.10 与 1.27.2–1.27.3，而仓库固定 `go 1.25.13`。这是时间性漂移，与本轮文档改动无关，但它挡住该仓库当前任何合入。
+- 升级 Go 需要同时改 `go.mod`、`Dockerfile` 里按 digest 固定的 `golang:*-alpine` 基础镜像、`docs/server-container-provenance.md`，属于供应链变更，未擅自处理，待用户决定。
+- 未打标签、未发布新版本。扩展新图标只体现在仓库 `main`，`v0.1.22` 的 Release 正文不变。
+
 ## STATUS-185：Android README 补 Obtainium 入口，修正排版
 
 - 用户要求在 README 加一键导入入口，与其他 Android 项目一致，并指出排版仍有肉眼可见的问题。
