@@ -25,7 +25,7 @@
 - `deploy/compose/compose.yaml` 与 `security/registry-release-ledger.json` 已按新摘要更新（ledger 6 条，校验脚本通过），提交 `2a29eeb`。
 - 部署前用当时运行的 v0.1.1 镜像执行 `backup-workspace` 并 `verify-workspace-backup` 得到 `result=verified`，备份落在 `/srv/sevenmirror/backups/pre-v0.1.2`；随后停止 relay 与 admin-web，把 `data/`、`authority/` 原样复制到 `backups/pre-v0.1.2-raw-<时间戳>`。
 - 只改 `.env` 的 `SEVENMIRROR_IMAGE` 一行（旧文件留存为 `.env.pre-e0afd80`），先 `docker pull` 再 `up -d`；relay 与 admin-web 均已重建到新摘要。
-- 切换后核对：工作区 ID 与创建时间未变（`GdOsMUd9…`，2026-09-08），权威密钥 ID 未变，设备清单仍为 7 台 Android 与两台 active Chrome，relay 健康且 `RestartCount=0`，本地 `/readyz` 200，公网设备入口 `/readyz` 200，公网管理端 `/login` 200。`/login` 直接打宿主回环会拿到 400，是 Origin 校验的正常表现，不是故障。
+- 切换后核对：工作区 ID 与创建时间未变（`GdOsMUd9…`，2026-09-08），权威密钥 ID 未变，设备状态仍为 1 台 active Android 与 2 台 active Chrome（另有 18 条已撤销记录，是名册保留的历史），relay 健康且 `RestartCount=0`，本地 `/readyz` 200，公网设备入口 `/readyz` 200，公网管理端 `/login` 200。`/login` 直接打宿主回环会拿到 400，是 Origin 校验的正常表现，不是故障。
 - 回滚路径：`.env` 换回 `.env.pre-e0afd80` 后 `up -d` 即可，v0.1.1 镜像仍在本地。
 - 溯源文档补 `v0.1.2 publication and deployment` 一节（`46424b7`）；服务端主线 CI [42502667391](https://github.com/huaxianyan/SevenMirror-Server/actions/runs/42502667391) 通过，本地远端只剩 `main`。
 - 提醒：`v0.1.2` 的 Release 正文里的构建信息表只有二进制产物的 SHA-256，没有容器摘要行；容器摘要记录在仓库的溯源文档与 ledger 里。
