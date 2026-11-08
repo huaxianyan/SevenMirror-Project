@@ -16,6 +16,16 @@
 - 服务端源码与历史发布情况按对应记录查证，仓库 HEAD 不能替代实际运行镜像。
 - 依赖外部资源的门禁继续按已确认的搁置决策处理，不把搁置写成安全风险已解决。
 
+## STATUS-187：开头清单改为纯文本本仓库名；服务端 Go 版本与扫描器升级并合入
+
+- 用户反馈「本仓库」这一说法不自然，改为四个仓库名称一律统一，当前仓库那一项只是不加超链接的纯文本。四个 README 同步修改。
+- 服务端升级由用户授权自行决定版本：`go.mod` 与 `Dockerfile` 从 Go 1.25.13 升到 1.27.3，基础镜像改为 `golang:1.27.3-alpine@sha256:fa3d5968…`（Docker Hub 标签接口与 registry manifest 头两处取值一致），`docs/server-container-provenance.md`、`README.md` 与 `docs/security-review/review-checklist.md` 同步更新；`server-builder-openssl-advisory-analysis.md` 属带日期的历史证据，保持原样。
+- 升级后 `govulncheck v1.1.4` 在 Go 1.27 语法树上直接 panic（`unexpected expr: *ast.KeyValueExpr`），扫描器固定版本升到 `v1.9.0`，测试与检查表一并更新。
+- 本地用同一 Go 1.27.3 工具链实跑 `govulncheck v1.9.0 -json ./...`：退出码 0，无可达发现，另有 21 条模块级参考发现。
+- 四仓库主线状态：项目总仓库 `824982e`、Android `478702a`、扩展 `f56674b`、服务端 `def18ac`；Android 主线 CI [42499615831](https://github.com/huaxianyan/SevenMirror-Android/actions/runs/42499615831)、扩展主线 CI [42499631525](https://github.com/huaxianyan/SevenMirror-Extension/actions/runs/42499631525)、服务端主线 CI [42498302653](https://github.com/huaxianyan/SevenMirror-Server/actions/runs/42498302653) 均通过，主题分支已全部删除，三端远端只剩 `main`。
+- Android 与总仓库的 README 定位语仍与新清单保持不重复的写法；三个中文脚本对四份 README 零命中。
+- 未打标签、未发版：本轮只动文档与构建工具链，`v0.1.0`／`v0.1.22` 的 Release 正文与产物不变。服务端下次发布前仍须按既有边界重新产出镜像与 provenance。
+
 ## STATUS-186：四仓库 README 统一开头，服务端合并被依赖门禁挡住
 
 - 用户要求给服务端与扩展的 README 补图标，并在开头加一行四个仓库的地址，本仓库那一项写作「本仓库」；四个仓库保持一致。
