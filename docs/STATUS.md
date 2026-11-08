@@ -16,6 +16,17 @@
 - 服务端源码与历史发布情况按对应记录查证，仓库 HEAD 不能替代实际运行镜像。
 - 依赖外部资源的门禁继续按已确认的搁置决策处理，不把搁置写成安全风险已解决。
 
+## STATUS-185：Android README 补 Obtainium 入口，修正排版
+
+- 用户要求在 README 加一键导入入口，与其他 Android 项目一致，并指出排版仍有肉眼可见的问题。
+- 新增「下载」小节：Releases 说明、Obtainium 按钮（`obtainium://app/…` 指向包名与本仓库）、一句用法说明，以及 `Application ID`／min SDK／target SDK 代码块，形态与 `PixelFix`、`ComebackGooglePinyinInput` 相同。徽标文件取自兄弟仓库同一份。
+- 排版问题两处：定位语与交接句里链接紧跟「与」「的」，渲染成 `服务端)与 浏览器扩展`、`项目总仓库)的 docs/STATUS.md`；另一处是文档索引用了表格，规范要求一行一条。均已改为列表并补空格。
+- 定位语原本连续两段都称自己「发送端」，删掉重复并改说「本仓库是其中的 Android 客户端」。
+- 截图改为整帧（含状态栏），与兄弟仓库一致：此前裁掉状态栏却留下导航栏，上下不对称。手机当时未连接，无法重拍；「同步与默认设置」这张底部把「远程操作」切了一半，待重拍。
+- 三个中文校验脚本零命中；README 的相对链接（含新增徽标）逐个核对存在。
+- 走完整流程：`docs/readme-obtainium` → CI [42444109601](https://github.com/huaxianyan/SevenMirror-Android/actions/runs/42444109601) → 快进合入 `main` → 主线 CI [42444652018](https://github.com/huaxianyan/SevenMirror-Android/actions/runs/42444652018) 通过，分支已删，`main` 为 `84f35f1`。
+- 本轮是文档改动，未重新打标签：`v0.1.0` 的 Release 正文与产物保持发布时的状态，README 的更新只体现在仓库 `main` 上。
+
 ## STATUS-184：Android 首个正式版 v0.1.0 发布，三端发布流程统一
 
 - 用户要求发布 Android 正式版本，并按已定 README 规范重写仓库门面、发布说明用中文、发布流程与另两端一致（全自动，不需要人工点批准）。
