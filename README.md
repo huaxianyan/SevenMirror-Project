@@ -1,4 +1,10 @@
-# SevenMirror 项目
+<div align="center">
+  <img src="docs/images/icon.png" width="120" alt="SevenMirror 图标">
+
+  # SevenMirror 项目
+
+  本仓库 · [Android 应用](https://github.com/huaxianyan/SevenMirror-Android) · [浏览器扩展](https://github.com/huaxianyan/SevenMirror-Extension) · [服务端](https://github.com/huaxianyan/SevenMirror-Server)
+</div>
 
 SevenMirror 把一个 Android 手机上的系统通知镜像到同一私有空间里已授权的浏览器，并允许在浏览器里回复或清除通知。整套系统可以完全自托管，通知正文全程端到端加密，服务端默认关闭公开注册。
 
@@ -6,16 +12,16 @@ SevenMirror 把一个 Android 手机上的系统通知镜像到同一私有空�
 
 | 组件 | 仓库 | 职责 |
 | --- | --- | --- |
-| 服务端 | [SevenMirror-Server](https://github.com/huaxianyan/SevenMirror-Server) | 中继、权威名册、管理端页面、管理 CLI |
-| 浏览器扩展 | [SevenMirror-Extension](https://github.com/huaxianyan/SevenMirror-Extension) | Chrome Manifest V3 扩展，接收、呈现与操作通知 |
-| Android 应用 | [SevenMirror-Android](https://github.com/huaxianyan/SevenMirror-Android) | 捕获本机通知，维护与中继的认证连接 |
+| 服务端 | SevenMirror-Server | 中继、权威名册、管理端页面、管理 CLI |
+| 浏览器扩展 | SevenMirror-Extension | Chrome Manifest V3 扩展，接收、呈现与操作通知 |
+| Android 应用 | SevenMirror-Android | 捕获本机通知，维护与中继的认证连接 |
 
 ## 系统怎么工作
 
 三个组件的信任关系由服务端的权威名册统一决定，客户端之间不建立双边信任。
 
 1. 设备用管理员签发的一次性加入码注册，进入待批准状态。
-2. 批准后，服务端把该设备写入权威名册并签名；名册是设备身份、角色和撤销状态的唯一运行期来源。
+2. 批准后，服务端把该设备写入权威名册并签名。名册是设备身份、角色和撤销状态的唯一运行期来源。
 3. 手机把自己选中的应用的通知加密，按收件人逐一封装，经服务端中继投递。
 4. 浏览器解开封包后呈现通知，回复与清除同样加密回传。
 5. 服务端只做密文路由，它看得见密文长度与投递时序，看不到标题、正文、应用名或回复内容。
@@ -68,7 +74,7 @@ SevenMirror 把一个 Android 手机上的系统通知镜像到同一私有空�
 
 ## 一处口径，避免误读
 
-发布门禁里那些需要外部资源的项（独立协议与密码学评审、第二位发布批准人、商店渠道、第二台不同厂商的真机等）已被搁置，不再作为验收门槛。**搁置的是门槛，不是风险**：这些项的真实状态没有变化，任何记录都不得据此写成「门禁已通过」或「风险已解决」。
+需要外部资源的发布门禁项已被搁置，不再作为验收门槛，包括独立协议与密码学评审、第二位发布批准人、商店渠道与第二台不同厂商的真机。**搁置的是门槛，不是风险**：这些项的真实状态没有变化，任何记录都不得据此写成「门禁已通过」或「风险已解决」。
 
 ## License
 
