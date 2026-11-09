@@ -16,6 +16,17 @@
 - 服务端源码与历史发布情况按对应记录查证，仓库 HEAD 不能替代实际运行镜像。
 - 依赖外部资源的门禁继续按已确认的搁置决策处理，不把搁置写成安全风险已解决。
 
+## STATUS-192：服务端 v0.1.3 发布并把管理端切到新样式
+
+- 用户要求把管理端新样式部署上线。版本定为 `v0.1.3`，内容只是外观：统一配色与控件尺寸、内容区不再包一张大卡、侧栏改左侧竖线标记。
+- 发布说明用 `## 改进` 一节（这一步既不是新能力也不是修旧缺陷），发布门禁对该仓库追加 `--feature-heading '## 改进'`，其余规则不变。
+- 标签 `v0.1.3` 指向 `00e04d4`，发布工作流 [42629650312](https://github.com/huaxianyan/SevenMirror-Server/actions/runs/42629650312) 成功；镜像索引 `sha256:0eae2ceb…`，两个平台可阻断发现为空。
+- `deploy/compose/compose.yaml` 与 `security/registry-release-ledger.json` 更新到新摘要（ledger 7 条，校验通过），溯源文档补 `v0.1.3` 一节。提交 `107e002`，主线 CI [42631077835](https://github.com/huaxianyan/SevenMirror-Server/actions/runs/42631077835) 通过。
+- 部署按既有流程：先用 v0.1.2 镜像 `backup-workspace` 并 `verify` 得 `result=verified`（`backups/pre-v0.1.3`），停 relay 与 admin-web 后复制 `data/`、`authority/`（`backups/pre-v0.1.3-raw-<时间戳>`），只改 `.env` 的 `SEVENMIRROR_IMAGE`（旧文件留 `.env.pre-0eae2ce`），再 `up -d`。
+- 切换后核对：两个容器都在新摘要上，relay `healthy`、`RestartCount=0`，本地与公网 `/readyz` 均 200，管理端 `/login` 200，线上 `admin.css` 已是新样式；工作区 ID 与权威密钥 ID 未变，设备仍是 1 台 active Android 加 1 台 active Chrome。
+- 观察：晚餐前看到的 active Chrome 是 2 台（含 `[Carbunkl] Work PC`），现在是 1 台，中间没有做过任何设备操作；疑似用户自己撤销了那台，需要他确认，否则要按异常排查。
+- 未发新协议版本，Android 与扩展无需同步升级；回滚路径是 `.env` 换回 `.env.pre-0eae2ce` 后 `up -d`，v0.1.2 镜像仍在本地。
+
 ## STATUS-191：管理端本机跑通登录并去掉外层卡片
 
 - 为看清登录后的界面，本机起了管理端实例：用启动时打印的应急码登录，按「设新口令 → 绑定动态验证码」两步完成初始化（TOTP 由脚本按密钥本地生成），随后进入控制台；同一实例用 `cmd/admin init-workspace` 建了临时私有空间，才有设备页可看。
