@@ -16,6 +16,20 @@
 - 服务端源码与历史发布情况按对应记录查证，仓库 HEAD 不能替代实际运行镜像。
 - 依赖外部资源的门禁继续按已确认的搁置决策处理，不把搁置写成安全风险已解决。
 
+## STATUS-189：扩展与管理端按新视觉重做，扩展加入通知历史与搜索
+
+- 用户先要原型、再定四条规则：历史保留 200 条；关掉历史只清手机已移除的记录；已读即转入历史、角标只数未读；搜索只匹配通知标题与正文。
+- 扩展数据层没有新建存储：IndexedDB 里的通知记录本就保存标题、正文、接收时间与已读版本号，手机删掉的也留着，因此直接作为历史来源，避免两套真相。
+- 新增 `listHistory`／`pruneHistory`／`markAllViewed`／`clearRemovedHistory`，200 条上限放在写入路径，不依赖有人打开弹窗才清理；手机已移除但未读的记录按历史处理且不可点，避免未读页挂着点了没反应的条目。
+- 新增 `keepReadHistory` 展示偏好（默认开），与清理规则读同一个值；设置页的「保留通知历史」开关写这个字段。
+- 弹窗重做：未读／历史／设置三页，未读页「全部已读」，历史页按日分组并「清除历史」，搜索跨两者并在结果上方给出总数与未读数。
+- 设置页保留原分区与左侧导航，换成同一套配色与尺寸；详情窗与 `interaction` 页只换配色，因其复用共享样式表。
+- 管理端 `admin.css` 换成同一批 token：图标蓝加深后承载白字、6px 控件、10px 面板、36px 按钮，侧栏去掉外框改为左侧竖线标记。
+- 验证：`npm run typecheck`、`npm test`（196 项，新增 5 项覆盖历史归类、200 上限、关历史只清已移除、已移除不算未读、清理保留在机记录）、`npm run build` 全过；`dist/` 以 headless 方式加载扩展后逐页截图，确认弹窗、设置页、详情窗均按新样式渲染，并据此修掉两处静态检查看不见的问题（状态行是写死英文、短列表时底栏浮在中间）。
+- 三次提交，分支 CI [42570468333](https://github.com/huaxianyan/SevenMirror-Extension/actions/runs/42570468333)、[42572300819](https://github.com/huaxianyan/SevenMirror-Extension/actions/runs/42572300819)、[42572875147](https://github.com/huaxianyan/SevenMirror-Extension/actions/runs/42572875147) 与主线 CI [42572971998](https://github.com/huaxianyan/SevenMirror-Extension/actions/runs/42572971998) 通过；管理端 [42573149689](https://github.com/huaxianyan/SevenMirror-Server/actions/runs/42573149689) 与主线 [42573410664](https://github.com/huaxianyan/SevenMirror-Server/actions/runs/42573410664) 通过。扩展 `main` 为 `6d3bd26`，服务端 `main` 为 `68aef00`。
+- 原型与截图在开发机 `E:/Dev/SevenMirror-Project/.tools/ui-prototype/`（未入库），冒烟用的临时 profile 已删除。
+- 未验证：真实配对数据下的三屏效果（当前截图是未配置状态的空态）、深色模式、管理端新配色的真机查看——线上管理端仍是 v0.1.2 镜像内的旧 CSS，要看到新样式需要重新发布镜像并切换部署。
+
 ## STATUS-188：服务端 v0.1.2 发布并把 <TEST_HOST> 切到新镜像，数据未受影响
 
 - 用户要求发布新的服务端版本并更新测试环境部署，且不能影响现有数据。由本轮自行决定版本号为 `v0.1.2`。
