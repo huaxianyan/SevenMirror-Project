@@ -16,6 +16,17 @@
 - 服务端源码与历史发布情况按对应记录查证，仓库 HEAD 不能替代实际运行镜像。
 - 依赖外部资源的门禁继续按已确认的搁置决策处理，不把搁置写成安全风险已解决。
 
+## STATUS-190：扩展 v0.1.23 发布，通知历史与搜索进入正式版本
+
+- 在 STATUS-189 的实现之上补齐发布件：新增 `docs/notification-history.md` 说明未读与历史的划分、已读判定、200 条上限、关闭历史后清什么、搜索只匹配标题与正文；README 文档索引补上这条与漏掉的提示音文档。
+- 扩展的发布说明门禁升到现行分类约定（此前仍是 `## 主要更新`），与 Android、服务端一致，测试 11 项通过。
+- 发布说明 `docs/release-notes/v0.1.23.md` 为 `## 新功能` 一节六条：历史、搜索、全部已读、保留历史开关、界面重做、升级保留配对。
+- 版本号在 `package.json` 与 `public/manifest.json` 同步升到 `0.1.23`，两者必须一致由发布工作流校验。
+- 标签 `v0.1.23` 指向 `26dfdb8`，分支 CI [42625240803](https://github.com/huaxianyan/SevenMirror-Extension/actions/runs/42625240803)、主线 CI [42625376033](https://github.com/huaxianyan/SevenMirror-Extension/actions/runs/42625376033)、发布工作流 [42625604297](https://github.com/huaxianyan/SevenMirror-Extension/actions/runs/42625604297) 均通过，全程无人工审批。
+- 线上复核：三个资产无显示标签，`sha256sum -c SHA256SUMS` 通过，zip 内 `manifest.json` 版本为 `0.1.23`、包含 `popup/` 等 28 个条目。
+- 未在真实配对数据下验收弹窗；商店版本仍由用户手动上传，GitHub Release 不等于 Chrome Web Store 已更新。
+- 主题分支已删，扩展 `main` 为 `26dfdb8`。
+
 ## STATUS-189：扩展与管理端按新视觉重做，扩展加入通知历史与搜索
 
 - 用户先要原型、再定四条规则：历史保留 200 条；关掉历史只清手机已移除的记录；已读即转入历史、角标只数未读；搜索只匹配通知标题与正文。
