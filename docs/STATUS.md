@@ -16,6 +16,18 @@
 - 服务端源码与历史发布情况按对应记录查证，仓库 HEAD 不能替代实际运行镜像。
 - 依赖外部资源的门禁继续按已确认的搁置决策处理，不把搁置写成安全风险已解决。
 
+## STATUS-194：管理端设备页改成名册，v0.1.4 已上线
+
+- 用户指出此前只换了配色、布局仍是旧结构。这一轮把设备页真正改成名册：待处理与已接入都是表格（设备／最近活动／操作），设备名下的平台与状态为第二行，申请、批准、最近认证收进名字旁的展开项，重命名与移除收在操作列，点开才出确认表单。
+- 同时修掉滚动条导致的横向跳位：控制台内容居中，此前只有设备页长到出现滚动条，页面会横移一下；`html` 加 `scrollbar-gutter: stable` 后位置固定。
+- 展开项的默认三角在 summary 内含块级子元素时会独占一行，改为隐藏原生标记、用 `strong::before` 画行内箭头。
+- 验证：`go test ./internal/adminweb/...` 通过；本机起实例走完首次初始化后截图确认表格布局（行高、展开箭头、操作列右对齐），空态页与四类状态文案未变。
+- 发布 `v0.1.4`（`## 改进` 一节）：标签指向 `fbfb0a3`，发布工作流 [42637380490](https://github.com/huaxianyan/SevenMirror-Server/actions/runs/42637380490) 成功，镜像索引 `sha256:5da228442…`，两平台可阻断发现为空；ledger 8 条通过校验，commit `aeb7fc5`。
+- 部署沿用既有流程：v0.1.3 镜像 `backup-workspace` + `verify` 得 `result=verified`（`backups/pre-v0.1.4`），停写后复制 `data/`、`authority/`（`backups/pre-v0.1.4-raw-<时间戳>`），只改 `.env` 的 `SEVENMIRROR_IMAGE`（旧文件留 `.env.pre-5da2284`），再 `up -d`。
+- 线上核对：relay `healthy`、`RestartCount=0`，本地与公网 `/readyz` 200，管理端 `/login` 200，线上 `admin.css` 已含 `device-table`，说明名册样式已生效。
+- 回滚：`.env` 换回 `.env.pre-5da2284` 后 `up -d`；v0.1.3 镜像仍在本地。
+- 未验证：名册在有真实设备时的交互（本机实例无设备，表格用同一份模板与样式渲染的样例行截图确认）；未在手机上复核任何行为。
+
 ## STATUS-193：internal/adminweb 代码度量（只读，不改代码）
 
 - 用户要求对本机新装的三件度量工具在服务端 `internal/adminweb`（含 `cmd/admin-web`）上做一次实测，只出报告不改代码。
