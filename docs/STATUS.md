@@ -16,6 +16,14 @@
 - 服务端源码与历史发布情况按对应记录查证，仓库 HEAD 不能替代实际运行镜像。
 - 依赖外部资源的门禁继续按已确认的搁置决策处理，不把搁置写成安全风险已解决。
 
+## STATUS-199：扩展详情页隐藏底栏并发布 v0.1.24（修商店送审前的真实缺陷）
+
+- 用户在预览里发现打开通知后底部「未读／历史」仍在。核对代码确认这是**真实缺陷**，不是预览问题：`<nav class="tabbar">` 与列表、详情并列，进入详情时没有任何地方隐藏它；更严重的是 `switchTab` 只改高亮不离开详情，点击后内容与高亮不一致。
+- 修复：详情视图显示时 `tabbar.hidden = true`，返回列表恢复；`switchTab` 若当前在详情页先调用 `showList()` 再切换。样式补 `.tabbar[hidden] { display: none }`（`.tabbar` 是 `display: grid`，`[hidden]` 本来压不住）。
+- 验证：`npm run typecheck`、196 项测试、`npm run build` 通过；重建 preview 并截图确认详情页不再出现底栏；本页同时暴露了预览自身的一处失真（手写的详情按钮缺少 `notification-detail` 容器类，已按 `mountNotificationDetail` 的真实结构重写）。
+- 发布 `v0.1.24`（问题修复一节）：标签 `3a56187`，工作流 [42666579264](https://github.com/huaxianyan/SevenMirror-Extension/actions/runs/42666579264) 成功，产物 `sevenmirror-extension-0.1.24.zip`（198 688 字节）。商店送审请用这个 zip，不要用 0.1.23。
+- 边界：这是静态构建 + 截图验证，未在真实配对浏览器里点过；送审后如启用，需要在实际使用中确认一次「打开详情 → 底栏消失 → 返回列表」的往返。
+
 ## STATUS-198：管理端收尾——品牌图标上线（v0.1.9），管理端阶段结束
 
 - 用户要求把图标放到管理端左上角，作为管理端的收尾。
