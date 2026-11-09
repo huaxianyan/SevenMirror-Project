@@ -16,6 +16,19 @@
 - 服务端源码与历史发布情况按对应记录查证，仓库 HEAD 不能替代实际运行镜像。
 - 依赖外部资源的门禁继续按已确认的搁置决策处理，不把搁置写成安全风险已解决。
 
+## STATUS-193：internal/adminweb 代码度量（只读，不改代码）
+
+- 用户要求对本机新装的三件度量工具在服务端 `internal/adminweb`（含 `cmd/admin-web`）上做一次实测，只出报告不改代码。
+- 覆盖率基线：`go test ./...` 由 crapper 触发执行，`internal/adminweb` 语句覆盖率 **76.4%**，`cmd/admin-web` 与 `cmd/admin`、`cmd/server` 均为 0%（无测试）。
+- CRAP 排序（工具报告值，覆盖率归因失效见下，等价于 `CC²`）：`dashboard` CC=23／552、`NewHandler` 21／462、`parsePasswordHash` 21／462、`LoadRuntimeConfig` 19／380、`setupCredential` 14／210、`main`(cmd/admin-web) 13／182、`setupSecondFactor` 13／182、`login` 11／132，其后 `parseTrustedProxyCIDRs`、`totpVerifier.verify` 各 8。
+- `dashboard` 为什么复杂（读代码后的判断，不是分数）：一个函数里叠了四件事——请求门禁（路径必须是 `/`、方法必须是 GET）、会话与首次初始化双重跳转、页面视图装配（CSRF、flash、分区、导航、时区、账户），以及遍历工作区与设备时，把 `approved`／`pending_proof`／`pending_approval`／`revoked` 四类状态就地分类并累计计数，再逐台映射成含权限位的视图。复杂度来自“状态分类”和“视图装配”挤在同一个函数里，与 SQL 或模板无关；拆法是把设备分类抽成纯函数、把视图装配抽成构造函数，处理函数只留下门禁与错误分支。
+- `dryer`：两对 1.00 相似——`rejectDevice` 与 `removeDevice`（同一 `changeDeviceAccess` 的两行包装）、`stylesheet` 与 `favicon`（同一静态资源处理器）。两者都是刻意的对称，不值得合并。
+- `mutator`：`handler.go` 共 **201** 个变异点，`--no-coverage --max-workers 4` 跑完，工具报告 0 存活。该数字只能读作“未发现能存活的行为变异”，因为编译失败的变异体同样计入检出。
+- 工具缺陷（已写进仓库 `AGENTS.md`）：crapper 的 Go 覆盖率归因在本仓库失效（`go test` 报 76.4%，报告全是 0.0%），`--use-existing-coverage` 与把 `coverage.out` 放到 `<root>/coverage.out`、`<root>/target/coverage/go/coverage.out` 均不生效；同一原因使 mutator 默认输出全 `n/a`，必须加 `--no-coverage`。
+- 边界：模板与 CSS 三个工具都不解析，本轮**没有**审过界面代码；本轮不覆盖 `cmd/admin-web` 的行为（无测试）；未做跨包依赖与运行期性能度量。
+- 证据：开发机 `E:/Dev/SevenMirror-Project/.tools/code-metrics-adminweb/`（`work/.metrics` 的 crap/dry 产出、副本根的 `mutate` 产出、`README.md` 汇总）。仓库内未提交任何度量产物。
+- 新增 `repos/server/AGENTS.md`，记录上述命令、两个坑、不解析模板/CSS 的边界与已知工具缺陷；按用户要求本轮不提交。
+
 ## STATUS-192：服务端 v0.1.3 发布并把管理端切到新样式
 
 - 用户要求把管理端新样式部署上线。版本定为 `v0.1.3`，内容只是外观：统一配色与控件尺寸、内容区不再包一张大卡、侧栏改左侧竖线标记。
