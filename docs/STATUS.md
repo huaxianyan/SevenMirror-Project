@@ -16,6 +16,14 @@
 - 服务端源码与历史发布情况按对应记录查证，仓库 HEAD 不能替代实际运行镜像。
 - 依赖外部资源的门禁继续按已确认的搁置决策处理，不把搁置写成安全风险已解决。
 
+## STATUS-204：扩展 v0.1.25 已发布
+
+- 用户确认收尾并发版。版本号 `0.1.25`（`package.json` 与 `public/manifest.json` 同步），发布说明 `docs/release-notes/v0.1.25.md`，新增公开文档 `docs/ui-baseline.md` 记录样式来源、间距节奏与安静按钮的悬停规则。
+- 本地门禁：`verify_release_notes.py --tag v0.1.25`、中文排版检查、`npm run typecheck`、196 项测试、`npm run build` 均通过，`dist/manifest.json` 版本为 `0.1.25`。
+- 先合入 `main`（`83db91e`，分支 CI [42759563672](https://github.com/huaxianyan/SevenMirror-Extension/actions/runs/42759563672)、主线 CI [42759672498](https://github.com/huaxianyan/SevenMirror-Extension/actions/runs/42759672498) 通过），再推标签 `v0.1.25` 触发自动发布（[42759794729](https://github.com/huaxianyan/SevenMirror-Extension/actions/runs/42759794729)）。
+- 线上产物：`sevenmirror-extension-0.1.25.zip`（200582 字节）、`SHA256SUMS`、`release-manifest.json`，均无显示标签。下载后 `sha256sum -c SHA256SUMS` 通过，ZIP 内 `manifest.json` 版本为 `0.1.25`，三个入口页面齐备，`gh attestation verify` 返回 0。
+- 未上传 Chrome Web Store，送审仍需用该 Release 的提交 ZIP 另行操作。预览浏览器与 `.smoke-tmp/` 已清理，`.tools/ui-prototype/` 截图证据留在开发机。
+
 ## STATUS-203：修掉弹窗悬停刷成主色、底栏整块高亮与设置页侧栏跳动
 
 - 用户报三处：弹窗列表行悬停后背景太深、正文看不清；底栏悬停是「一大块」；设置页点「关于」时左侧导航上跳，点回其他项又弹回。
