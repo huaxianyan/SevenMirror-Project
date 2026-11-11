@@ -16,6 +16,15 @@
 - 服务端源码与历史发布情况按对应记录查证，仓库 HEAD 不能替代实际运行镜像。
 - 依赖外部资源的门禁继续按已确认的搁置决策处理，不把搁置写成安全风险已解决。
 
+## STATUS-205：修掉历史丢内容、没有应用图标、已读后通知还在
+
+- 用户实际使用中发现三处：历史里既无应用图标也无标题正文；未读有标题正文但同样无图标；点开未读返回列表后变为历史，但右下角的系统通知仍在。
+- 根因一（数据丢失）：手机清除通知发的是 `removed` 事件，它本身不带内容，而 `reconcile` 用整条记录替换，把标题、正文、动作、图标和接收时间全抹了。现在 `removed` 只改状态，保留原有内容；新增一条存储测试固定这个行为。（文档 `docs/notification-history.md` 本就写着「历史就是本机记录」，此前实现与之不符。）
+- 根因二（无图标）： `NotificationHistoryEntry` 与弹窗载荷都没有图标。现在记录带 `appIcon`，弹窗载荷按图标哈希去重后只发一份（单个图标最大 128 KiB，200 条不能逐条发），行首渲染图片，没图标的退回顾有首字方块。
+- 根因三（通知残留）：`markNotificationsViewed` 只写存储不关通知。现在打开一条与「全部已读」都走既有程序化关闭路径（`markProgrammaticClose` + `chrome.notifications.clear`，本地已读不向 Android 上报为用户清除）；呈现刷新同时跳过已读条目，避免改偏好把已关闭的通知又弹出来。
+- 验证：`typecheck`、197 项测试（新增 1 项）、构建通过；用隔离 profile 加模拟载荷确认弹窗两页都渲染应用图标与标题正文。**未在真实配对设备上验收关闭系统通知这一步**，本轮不可视为已验证。
+- 提交 `b544596`，分支 CI [43078155272](https://github.com/huaxianyan/SevenMirror-Extension/actions/runs/43078155272) 与主线 CI [43078308679](https://github.com/huaxianyan/SevenMirror-Extension/actions/runs/43078308679) 均通过。**未发版**：版本仍为 `0.1.25`，修复待下一版发布。
+
 ## STATUS-204：扩展 v0.1.25 已发布
 
 - 用户确认收尾并发版。版本号 `0.1.25`（`package.json` 与 `public/manifest.json` 同步），发布说明 `docs/release-notes/v0.1.25.md`，新增公开文档 `docs/ui-baseline.md` 记录样式来源、间距节奏与安静按钮的悬停规则。
