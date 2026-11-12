@@ -16,6 +16,16 @@
 - 服务端源码与历史发布情况按对应记录查证，仓库 HEAD 不能替代实际运行镜像。
 - 依赖外部资源的门禁继续按已确认的搁置决策处理，不把搁置写成安全风险已解决。
 
+## STATUS-210：修 v0.1.26 实测暴露的三处界面缺陷，服务端升到 Go 1.27.4
+
+- 用户在商店版实测反馈三件事：弹窗打开时「主区域不见了」；切到历史页时顶栏高度变化；设置页滚动条悬在页面中间不贴窗口右缘。
+- 弹窗塌陷：弹出窗口按内容定尺寸，`max-height` 让弹性列没有可分配的余量，列表被压到几十像素，空状态一起被裁掉。改为 `height: min(600px, 100vh)` 定高。实测 400×600 下列表 381 像素、底栏贴在 600；400×460 下列表 241、底栏贴在 460。
+- 顶栏跳动：`全部已读` / `清除历史` 是 36 像素的按钮，未读页无按钮时只剩 32 像素的齿轮，顶栏在 62.4 与 58.4 之间跳 4 像素。按钮组固定 36 像素高后两页都是 62.4。
+- 滚动条不贴边：`.layout` 自己限宽 72rem，滚动条就落在栏宽边缘。改为 `.layout` 铺满窗口、72rem 收进新的 `.layout-inner`。实测 1600 宽下滚动条占窗口最右 15 像素，顶栏仍通栏 1600，内容居中在 376–1528。
+- 提交 `b103b49`，分支 CI [43167294287](https://github.com/huaxianyan/SevenMirror-Extension/actions/runs/43167294287)、主线 CI [43167432101](https://github.com/huaxianyan/SevenMirror-Extension/actions/runs/43167432101) 通过。`typecheck` 与 197 项测试通过。**未发版**，等用户决定是否切 0.1.27。
+- 服务端按用户选择升 Go：`go.mod`、两份 README、服务端 `AGENTS.md` 的 `GOTOOLCHAIN` 改到 1.27.4，`Dockerfile` 的构建镜像暂时只用标签（1.27.4 的 index digest 要从 registry 取，本机连不上 Docker Hub 与 Go 代理），`docs/server-container-provenance.md` 把这个缺口写清楚了并留下取 digest 的命令。提交 `71699f3`，主线 CI [43166899791](https://github.com/huaxianyan/SevenMirror-Server/actions/runs/43166899791) 通过。
+- 首次 CI 在 `TestAuthenticatedReplacementTakesOverTheSlotAndRetiresTheOriginal` 失败（`websocket: close 1006`），重跑即通过，属既有测试的时序抖动，与本次改动无关；未改断言掩盖它。**服务端 v0.1.2 镜像仍跑在 Go 1.27.3 上**，要真正消除告警需发一版新镜像。
+
 ## STATUS-209：四仓库 README 调整语言版本与组件顺序，服务端受阻于新漏洞
 
 - 用户要求：组件顺序改为总仓库、服务端、Chrome 扩展、Android；在下方加语言版本行，中文为默认，另做英文版 README；「浏览器扩展」的称呼统一改成「Chrome 扩展」。补一条用户告知的事实：扩展已上架 Chrome 应用商店（条目 `fibpoeijlejjkokmngpcoahdhbjigcma`）。
