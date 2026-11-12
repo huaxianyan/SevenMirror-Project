@@ -16,6 +16,15 @@
 - 服务端源码与历史发布情况按对应记录查证，仓库 HEAD 不能替代实际运行镜像。
 - 依赖外部资源的门禁继续按已确认的搁置决策处理，不把搁置写成安全风险已解决。
 
+## STATUS-213：服务端 v0.1.11 发布并部署，管理端有自定义样式
+
+- 管理端设置页新增「自定义样式」：输入框预置与扩展一致的默认样式，保存／清空／恢复默认，保存后生效。内容存 `localStorage`，不进数据库、不加接口、不需要迁移。注入覆盖登录页、初始设置页与主面板。
+- 与浏览器扩展 `0.1.27` 同日同款功能，两边默认样式共用同一份内容。
+- 部署：镜像索引 `sha256:fd38d8500da0c7b790885d93f3ab71527fa86061e7309dc2891ba2b81993314c`，发布工作流 `43237756415`。先 `backup-workspace` 并对 workspace `GdOsMUd9Bij6pKFl7Qehbw` 执行 `verify-workspace-backup` 得到 `result=verified`，另把 `data/` 与 `authority/` 复制成 `backups/pre-v0.1.11-raw/`，旧 `.env` 存为 `.env.pre-0.1.11`。
+- 部署后核对：relay 与 admin-web 运行中，relay `healthy`，`/healthz`、`/readyz` 200，设备域 `/healthz`、`/readyz` 200，管理端 `/login` 200，`/assets/custom-css.js` 200 且登录页已引用。
+- 仓库侧同步：`deploy/compose/compose.yaml` 的固定摘要更新为本次索引，`docs/server-release-provenance.md` 补 v0.1.10 与 v0.1.11 两节。
+- 教训：`backup-workspace` 是 `admin` 服务的子命令（`--entrypoint /app/admin`），且必须同时挂载 `data`、`backups` 与 `authority` 到容器内**原始绝对路径** `/srv/sevenmirror/authority`，否则数据库里记录的密钥路径在容器内不存在。
+
 ## STATUS-212：扩展与 Android 有未发版的改动，用户在测试期
 
 - 用户决定先用本地构建的扩展和自建 APK 用一段时间，没问题再发版。以下改动都在 `main` 上，**尚未打标签**。
