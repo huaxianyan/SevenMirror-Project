@@ -16,6 +16,15 @@
 - 服务端源码与历史发布情况按对应记录查证，仓库 HEAD 不能替代实际运行镜像。
 - 依赖外部资源的门禁继续按已确认的搁置决策处理，不把搁置写成安全风险已解决。
 
+## STATUS-211：服务端 v0.1.10 发布并部署到 Shiva
+
+- 用户要求先更新服务端，扩展端改由本机调试验证。
+- 发布 `v0.1.10`，内容是 Go 1.27.4 的安全补丁（GO-2026-6859 / CVE-2026-97054）。首轮标签推送失败：发布流水线拒绝没有 digest 的构建镜像（`every Dockerfile base image must use one sha256 digest`）。补 digest 时本机与 Shiva 都连不上 Docker Hub，改为在 CI 里读：`golang:1.27.4-alpine` 的 index digest 为 `sha256:0a5f7fe796599ff487605987432e7619ae45beeb2fba4c2ce0b907879932aebf`，registry index 与 Docker Hub 标签接口两处一致。临时工作流读完即删，不进历史。
+- 发布流水线 [43171778872](https://github.com/huaxianyan/SevenMirror-Server/actions/runs/43171778872) 通过，镜像 digest `sha256:e695a88632dca4c328316e10d3151ca72ff9b3a8cd070bd8dd85ea0c5ecf6fa3`。
+- 部署前用 outgoing 镜像 `backup-workspace` 并 `verify-workspace-backup`（`result=verified`），备份在 `/srv/sevenmirror/backups/pre-0.1.10`；停 relay 与 admin-web 后复制 `data/`、`authority/` 到 `rollback-0.1.9/`，只改 `.env` 的 `SEVENMIRROR_IMAGE`，旧 `.env` 存为 `.env.pre-e695a88`。
+- 切换后 relay `healthy`，`/healthz` 与 `/readyz` 均为 `ok`；公网 `sevenmirror.neko7ina.com/healthz` 200、`sevenmirror-admin.neko7ina.com/login` 200。
+- 顺带纠正记录：Shiva 此前实际运行的是 `v0.1.9`（digest `3669ddde…`），不是旧记录写的 `v0.1.2`；宿主机 README 的发布边界段已按现状改写。
+
 ## STATUS-210：修 v0.1.26 实测暴露的三处界面缺陷，服务端升到 Go 1.27.4
 
 - 用户在商店版实测反馈三件事：弹窗打开时「主区域不见了」；切到历史页时顶栏高度变化；设置页滚动条悬在页面中间不贴窗口右缘。
