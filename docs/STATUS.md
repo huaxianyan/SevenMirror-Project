@@ -16,6 +16,14 @@
 - 服务端源码与历史发布情况按对应记录查证，仓库 HEAD 不能替代实际运行镜像。
 - 依赖外部资源的门禁继续按已确认的搁置决策处理，不把搁置写成安全风险已解决。
 
+## STATUS-208：扩展 v0.1.26 已发布
+
+- 用户确认发正式版来实测。版本 `0.1.26`（`package.json` 与 `public/manifest.json` 同步），发布说明 `docs/release-notes/v0.1.26.md`，把 STATUS-205 至 STATUS-207 的修复一并发出。
+- 本地门禁：发布说明门禁、中文排版检查、`typecheck`、197 项测试、构建均通过，`dist/manifest.json` 为 `0.1.26`。
+- 先合入 `main`（`04b2d5c`，分支 CI [43161898626](https://github.com/huaxianyan/SevenMirror-Extension/actions/runs/43161898626)、主线 CI [43162013637](https://github.com/huaxianyan/SevenMirror-Extension/actions/runs/43162013637) 通过），再推标签触发自动发布（[43162131866](https://github.com/huaxianyan/SevenMirror-Extension/actions/runs/43162131866)）。
+- 线上产物：`sevenmirror-extension-0.1.26.zip`（201070 字节）、`SHA256SUMS`、`release-manifest.json`，均无显示标签。`sha256sum -c SHA256SUMS` 通过，ZIP 内 `manifest.json` 为 `0.1.26`，`gh attestation verify` 返回 0（首轮超时，二次通过）。
+- **未上传 Chrome Web Store**，正式实测用该 Release 的提交 ZIP。下一步等用户实际配对验收：关闭镜像系统通知那一步尚未在真机上验证。
+
 ## STATUS-207：滚动改为只滚正文区，顶栏不再为滚动条让位
 
 - 用户指出上一轮的反效果：`scrollbar-gutter` 加在 `html` 上后，通栏顶栏的右侧空出一条，希望滚动条只出现在正文区域右侧；弹窗同理，只要列表滚动。
