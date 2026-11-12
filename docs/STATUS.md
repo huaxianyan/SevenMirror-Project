@@ -16,6 +16,14 @@
 - 服务端源码与历史发布情况按对应记录查证，仓库 HEAD 不能替代实际运行镜像。
 - 依赖外部资源的门禁继续按已确认的搁置决策处理，不把搁置写成安全风险已解决。
 
+## STATUS-209：四仓库 README 调整语言版本与组件顺序，服务端受阻于新漏洞
+
+- 用户要求：组件顺序改为总仓库、服务端、Chrome 扩展、Android；在下方加语言版本行，中文为默认，另做英文版 README；「浏览器扩展」的称呼统一改成「Chrome 扩展」。补一条用户告知的事实：扩展已上架 Chrome 应用商店（条目 `fibpoeijlejjkokmngpcoahdhbjigcma`）。
+- 已合入：总仓库 `db432f3`、Chrome 扩展 `c91459b`（CI [43164006741](https://github.com/huaxianyan/SevenMirror-Extension/actions/runs/43164006741)）、Android `314014f`（CI [43164035059](https://github.com/huaxianyan/SevenMirror-Android/actions/runs/43164035059)）。四份 `README.en.md` 已就位，语言行写法沿用用户既有仓库的 `[简体中文](README.md) | [English](README.en.md)`。
+- 商店内容：README 加本地徽章 `docs/images/chrome-web-store-badge.png`（官方徽章资源下载不到，徽章由本机绘制，需要时替换成官方图）、安装步骤优先指向商店、组件的职责列标注已上架；发布溯源的状态行改为「已上架，商店侧证据仍未记录」。
+- **服务端未合入**：README 改动在分支 `docs/readme-language-and-store`（`ad96335`），CI [43164055446](https://github.com/huaxianyan/SevenMirror-Server/actions/runs/43164055446) 失败，原因是 `govulncheck` 报出昨日新发布的可达告警 `GO-2026-6859`（`net/http` 的 MaxBytesReader 响应头竞态，修复版本 Go 1.27.4），与本次文档改动无关。任何服务端改动都会被同一检查拦住。
+- 该修复要先升 Go（`go.mod`、`Dockerfile` 基础镜像 digest、`docs/server-container-provenance.md` 三处同步），属供应链变更。本机访问不到 Docker Hub 与 Go 代理，无法按约定从两处核对 digest，因此未擅自升级，等用户决定。
+
 ## STATUS-208：扩展 v0.1.26 已发布
 
 - 用户确认发正式版来实测。版本 `0.1.26`（`package.json` 与 `public/manifest.json` 同步），发布说明 `docs/release-notes/v0.1.26.md`，把 STATUS-205 至 STATUS-207 的修复一并发出。
