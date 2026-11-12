@@ -3,17 +3,23 @@
 
   # SevenMirror 项目
 
-项目总仓库 · [Android 应用](https://github.com/huaxianyan/SevenMirror-Android) · [浏览器扩展](https://github.com/huaxianyan/SevenMirror-Extension) · [服务端](https://github.com/huaxianyan/SevenMirror-Server)
+项目总仓库 · [服务端](https://github.com/huaxianyan/SevenMirror-Server) · [Chrome 扩展](https://github.com/huaxianyan/SevenMirror-Extension) · [Android 应用](https://github.com/huaxianyan/SevenMirror-Android)
+
+[简体中文](README.md) | [English](README.en.md)
 </div>
 
 SevenMirror 把一个 Android 手机上的系统通知镜像到同一私有空间里已授权的浏览器，并允许在浏览器里回复或清除通知。整套系统可以完全自托管，通知正文全程端到端加密，服务端默认关闭公开注册。
+
+<p align="center">
+  <a href="https://chromewebstore.google.com/detail/fibpoeijlejjkokmngpcoahdhbjigcma"><img src="docs/images/chrome-web-store-badge.png" height="56" alt="在 Chrome 应用商店中获取 SevenMirror 扩展"></a>
+</p>
 
 本仓库是**项目总仓库**，只放整套系统的说明与开发留痕，不承载可执行代码。三个组件各自独立成仓库：
 
 | 组件 | 仓库 | 职责 |
 | --- | --- | --- |
 | 服务端 | SevenMirror-Server | 中继、权威名册、管理端页面、管理 CLI |
-| 浏览器扩展 | SevenMirror-Extension | Chrome Manifest V3 扩展，接收、呈现与操作通知 |
+| Chrome 扩展 | SevenMirror-Extension | Chrome Manifest V3 扩展，接收、呈现与操作通知，已上架 Chrome 应用商店 |
 | Android 应用 | SevenMirror-Android | 捕获本机通知，维护与中继的认证连接 |
 
 ## 系统怎么工作
@@ -74,7 +80,9 @@ SevenMirror 把一个 Android 手机上的系统通知镜像到同一私有空�
 
 ## 一处口径，避免误读
 
-需要外部资源的发布门禁项已被搁置，不再作为验收门槛，包括独立协议与密码学评审、第二位发布批准人、商店渠道与第二台不同厂商的真机。**搁置的是门槛，不是风险**：这些项的真实状态没有变化，任何记录都不得据此写成「门禁已通过」或「风险已解决」。
+需要外部资源的发布门禁项已被搁置，不再作为验收门槛，包括独立协议与密码学评审、第二位发布批准人与第二台不同厂商的真机。**搁置的是门槛，不是风险**：这些项的真实状态没有变化，任何记录都不得据此写成「门禁已通过」或「风险已解决」。
+
+商店渠道这一项后来自己发生了：Chrome 扩展已上架，[商店条目](https://chromewebstore.google.com/detail/fibpoeijlejjkokmngpcoahdhbjigcma)。上架是分发事实，不等于独立评审或第二位发布批准已完成。
 
 ## License
 
