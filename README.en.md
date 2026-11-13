@@ -1,4 +1,5 @@
 <div align="center">
+  <img src="docs/images/icon.png" width="120" alt="SevenMirror icon">
 
   # SevenMirror Project
 
