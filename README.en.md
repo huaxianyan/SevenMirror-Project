@@ -5,14 +5,10 @@
 
 Project hub · [Server](https://github.com/huaxianyan/SevenMirror-Server) · [Chrome extension](https://github.com/huaxianyan/SevenMirror-Extension) · [Android app](https://github.com/huaxianyan/SevenMirror-Android)
 
-English | [简体中文](README.md)
+[简体中文](README.md) | English
 </div>
 
 SevenMirror mirrors system notifications from an Android phone to the browsers authorised in the same private space, and lets you reply to or clear those notifications from the browser. The whole system is self-hostable, notification content stays end-to-end encrypted, and public registration is off by default on the server.
-
-<p align="center">
-  <a href="https://chromewebstore.google.com/detail/fibpoeijlejjkokmngpcoahdhbjigcma"><img src="docs/images/chrome-web-store-badge.png" height="56" alt="Get the SevenMirror extension on the Chrome Web Store"></a>
-</p>
 
 This repository is the **project hub**. It carries the documentation and the development record for the whole system, not runnable code. Each component lives in its own repository:
 

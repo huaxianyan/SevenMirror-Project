@@ -10,10 +10,6 @@
 
 SevenMirror 把一个 Android 手机上的系统通知镜像到同一私有空间里已授权的浏览器，并允许在浏览器里回复或清除通知。整套系统可以完全自托管，通知正文全程端到端加密，服务端默认关闭公开注册。
 
-<p align="center">
-  <a href="https://chromewebstore.google.com/detail/fibpoeijlejjkokmngpcoahdhbjigcma"><img src="docs/images/chrome-web-store-badge.png" height="56" alt="在 Chrome 应用商店中获取 SevenMirror 扩展"></a>
-</p>
-
 本仓库是**项目总仓库**，只放整套系统的说明与开发留痕，不承载可执行代码。三个组件各自独立成仓库：
 
 | 组件 | 仓库 | 职责 |
