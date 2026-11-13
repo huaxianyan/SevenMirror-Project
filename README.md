@@ -1,11 +1,10 @@
 <div align="center">
-  <img src="docs/images/icon.png" width="120" alt="SevenMirror 图标">
 
   # SevenMirror 项目
 
 项目总仓库 · [服务端](https://github.com/huaxianyan/SevenMirror-Server) · [Chrome 扩展](https://github.com/huaxianyan/SevenMirror-Extension) · [Android 应用](https://github.com/huaxianyan/SevenMirror-Android)
 
-[简体中文](README.md) | [English](README.en.md)
+简体中文 | [English](README.en.md)
 </div>
 
 SevenMirror 把一个 Android 手机上的系统通知镜像到同一私有空间里已授权的浏览器，并允许在浏览器里回复或清除通知。整套系统可以完全自托管，通知正文全程端到端加密，服务端默认关闭公开注册。
@@ -22,7 +21,7 @@ SevenMirror 把一个 Android 手机上的系统通知镜像到同一私有空�
 | Chrome 扩展 | SevenMirror-Extension | Chrome Manifest V3 扩展，接收、呈现与操作通知，已上架 Chrome 应用商店 |
 | Android 应用 | SevenMirror-Android | 捕获本机通知，维护与中继的认证连接 |
 
-## 系统怎么工作
+## 工作原理
 
 三个组件的信任关系由服务端的权威名册统一决定，客户端之间不建立双边信任。
 
@@ -32,7 +31,7 @@ SevenMirror 把一个 Android 手机上的系统通知镜像到同一私有空�
 4. 浏览器解开封包后呈现通知，回复与清除同样加密回传。
 5. 服务端只做密文路由，它看得见密文长度与投递时序，看不到标题、正文、应用名或回复内容。
 
-需要先说明一条边界：手机与浏览器之间没有共享的对称密钥，权威私钥只在服务端。所以跨设备共享的配置项（例如通知优先级规则）另外走「浏览器自己用口令派生密钥、服务端盲存密文」这条路，服务端同样解不开。
+一条边界：手机与浏览器之间没有共享的对称密钥，权威私钥只在服务端。所以跨设备共享的配置项（例如通知优先级规则）另外走「浏览器自己用口令派生密钥、服务端盲存密文」这条路，服务端同样解不开。
 
 ## 核心原则
 
@@ -67,7 +66,7 @@ SevenMirror 把一个 Android 手机上的系统通知镜像到同一私有空�
 - [实施状态](docs/STATUS.md)：按编号递增的交付记录，每条写清改动、验证方式、结论与边界。
 - [分支审计](docs/BRANCH_AUDIT.md)：主题分支治理与清理记录。
 
-## 留痕怎么读
+## 留痕
 
 `docs/STATUS.md` 是主时间线，条目编号越大越新。每条记录包含四类信息：
 
@@ -78,11 +77,11 @@ SevenMirror 把一个 Android 手机上的系统通知镜像到同一私有空�
 
 `docs/DEVELOPMENT_PLAN.md` 维护当前阶段的待办清单与验收标准，并在末尾按轮次追加执行进展，与 `STATUS.md` 的条目互相对应。
 
-## 一处口径，避免误读
+## 口径
 
 需要外部资源的发布门禁项已被搁置，不再作为验收门槛，包括独立协议与密码学评审、第二位发布批准人与第二台不同厂商的真机。**搁置的是门槛，不是风险**：这些项的真实状态没有变化，任何记录都不得据此写成「门禁已通过」或「风险已解决」。
 
-商店渠道这一项后来自己发生了：Chrome 扩展已上架，[商店条目](https://chromewebstore.google.com/detail/fibpoeijlejjkokmngpcoahdhbjigcma)。上架是分发事实，不等于独立评审或第二位发布批准已完成。
+Chrome 扩展已上架，[商店条目](https://chromewebstore.google.com/detail/fibpoeijlejjkokmngpcoahdhbjigcma)。上架是分发事实，不等于独立评审或第二位发布批准已完成。
 
 ## License
 

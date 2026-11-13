@@ -1,11 +1,10 @@
 <div align="center">
-  <img src="docs/images/icon.png" width="120" alt="SevenMirror icon">
 
   # SevenMirror Project
 
 Project hub · [Server](https://github.com/huaxianyan/SevenMirror-Server) · [Chrome extension](https://github.com/huaxianyan/SevenMirror-Extension) · [Android app](https://github.com/huaxianyan/SevenMirror-Android)
 
-[English](README.en.md) | [简体中文](README.md)
+English | [简体中文](README.md)
 </div>
 
 SevenMirror mirrors system notifications from an Android phone to the browsers authorised in the same private space, and lets you reply to or clear those notifications from the browser. The whole system is self-hostable, notification content stays end-to-end encrypted, and public registration is off by default on the server.
@@ -22,7 +21,7 @@ This repository is the **project hub**. It carries the documentation and the dev
 | Chrome extension | SevenMirror-Extension | Chrome Manifest V3 extension: receives, presents and acts on notifications; published on the Chrome Web Store |
 | Android app | SevenMirror-Android | Captures local notifications, keeps the authenticated relay connection |
 
-## How the system works
+## How it works
 
 The server's authoritative roster decides trust for all three components; clients never trust each other bilaterally.
 
@@ -67,7 +66,7 @@ Record:
 - [Implementation status](docs/STATUS.md): numbered delivery entries, each stating the change, how it was verified, the conclusion and the boundary.
 - [Branch audit](docs/BRANCH_AUDIT.md): theme-branch governance and cleanup record.
 
-## How to read the record
+## Records
 
 `docs/STATUS.md` is the main timeline; higher entry numbers are newer. Each entry carries four kinds of information:
 
@@ -78,11 +77,11 @@ Record:
 
 `docs/DEVELOPMENT_PLAN.md` holds the todo list and acceptance criteria for the current phase, and appends progress per round, matching the entries in `STATUS.md`.
 
-## One caveat against misinterpretation
+## Caveats
 
 Release gates that need external resources are parked and no longer count as acceptance thresholds: independent protocol and cryptography review, a second release approver, and a second device from another vendor. **What is parked is the threshold, not the risk**: the real state of those items is unchanged, and no record may be read as "gates passed" or "risk resolved".
 
-The store channel then happened on its own: the Chrome extension is published ([store listing](https://chromewebstore.google.com/detail/fibpoeijlejjkokmngpcoahdhbjigcma)). Being listed is a distribution fact, not a completed independent review or a second release approval.
+The Chrome extension is published ([store listing](https://chromewebstore.google.com/detail/fibpoeijlejjkokmngpcoahdhbjigcma)). Being listed is a distribution fact, not a completed independent review or a second release approval.
 
 ## License
 
