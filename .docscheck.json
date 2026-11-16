@@ -1,0 +1,14 @@
+{
+  "root_docs_allow": [
+    "BRANCH_AUDIT.md",
+    "CONTENT_BOUNDARY.md",
+    "DEVELOPMENT_DIRECTION_CORRECTION.md",
+    "DEVELOPMENT_PLAN.md",
+    "IMPLEMENTATION_PLAN.md",
+    "PRD.md",
+    "PRODUCT_INFORMATION_ARCHITECTURE.md",
+    "PRODUCT_REDESIGN.md",
+    "DIAGNOSTICS.md",
+    "WORKFLOW.md"
+  ]
+}
